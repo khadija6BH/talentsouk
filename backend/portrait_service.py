@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime,timezone
 from contextlib import contextmanager
 import time
-from pathlib import Path
+from backend.upload_storage import UploadPath as Path
 from urllib import request,error
 from backend import database
 

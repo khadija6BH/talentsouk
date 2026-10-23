@@ -1,18 +1,14 @@
-# Paid production configuration: review Render's displayed quote before applying.
+# Free preview configuration. Durable upload storage must be configured before launch.
 services:
   - type: web
     name: talentsouk
     runtime: docker
-    plan: 0.5c-512mb
+    plan: free
     region: frankfurt
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
     numInstances: 1
-    disk:
-      name: talentsouk-uploads
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: STORAGE_ROOT
         value: /data

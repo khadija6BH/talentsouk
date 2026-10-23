@@ -1,3 +1,11 @@
+# Current choice: free hosting only
+
+Render is configured as Free, without a persistent disk or paid service. Supabase PostgreSQL remains the account database. Durable private uploads must be moved to Supabase Storage before launch; the app currently still uses filesystem storage, so do NOT launch this configuration for real uploads yet. Supabase Free includes 1 GB file storage subject to its current quotas. Render Free sleeps on idle and does not guarantee continuous background notification delivery.
+
+The paid Render notes below describe an earlier alternative that has NOT been activated. Do not apply a paid compute plan or attach a Render disk without separate approval.
+
+---
+
 # Render deployment (current target)
 
 `render.yaml` describes one Docker web service in Frankfurt with one 1 GB persistent disk mounted at `/data`, the existing Supabase database, HTTPS session cookies and `/api/health`. It is a PAID configuration; review the dashboard quote before creating it. Current published minimum compute is $7/month plus $0.25/GB-month for disk, excluding taxes and usage overages. No service is created by writing this file.

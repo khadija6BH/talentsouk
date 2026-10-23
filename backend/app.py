@@ -18,7 +18,7 @@ import secrets
 from datetime import date, datetime, timedelta, timezone
 from email.utils import parseaddr
 from functools import wraps
-from pathlib import Path
+from backend.upload_storage import UploadPath as Path
 
 from backend.career_dna_service import get_career_dna, get_unified_candidate_profile, save_career_dna
 
@@ -3492,6 +3492,8 @@ def profile_photo():
     photo_filename = get_cv_builder_data(session["user_id"])["profile_photo_filename"]
     if not photo_filename:
         return "", 404
+    if not (Path(app.config["PROFILE_PHOTO_FOLDER"]) / photo_filename).is_file():
+        return "", 404
     return send_from_directory(app.config["PROFILE_PHOTO_FOLDER"], photo_filename)
 
 
@@ -3851,6 +3853,9 @@ def settings_delete_account():
     from backend.portrait_service import owner_folder
     portrait_root=Path(app.config['PORTRAIT_FOLDER']).resolve()
     portrait_owner=owner_folder(portrait_root,user_id).resolve()
+    if portrait_owner.parent==portrait_root:
+        from backend.upload_storage import delete_folder
+        delete_folder(portrait_owner)
     if portrait_owner.parent==portrait_root and portrait_owner.is_dir():
         import shutil
         shutil.rmtree(portrait_owner)
