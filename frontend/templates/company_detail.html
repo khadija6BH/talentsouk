@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} â€” TalentSouk{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  #company-detail-map { height: 260px; width: 100%; border-radius: 0.75rem; z-index: 0; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    font-size: 0.6875rem; font-weight: 600; padding: 0.2rem 0.6rem;
+    border-radius: 9999px; white-space: nowrap;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set CATEGORY_COLORS = {
+  "IT": "#673147", "AI / Data": "#D8C7D8", "Finance": "#A18F93", "Marketing": "#673147",
+  "Engineering": "#A18F93", "Tourism": "#673147", "Education": "#D8C7D8",
+  "Healthcare": "#673147", "Logistics": "#A18F93", "Other": "#A18F93"
+} %}
+{% set STATUS_STYLES = {
+  "Discovered": "bg-slate-100 text-slate-500",
+  "Contacted": "bg-blue-50 text-blue-600",
+  "Wishlist": "bg-purple-50 text-purple-500",
+  "Applied": "bg-purple-50 text-purple-600",
+  "Replied": "bg-purple-50 text-purple-600",
+  "Interview": "bg-purple-50 text-purple-600",
+  "Offer Received": "bg-purple-50 text-purple-600"
+} %}
+{% set category_color = CATEGORY_COLORS.get(company.category, "#A18F93") %}
+
+<!-- Back link -->
+<a href="{{ url_for('companies') }}" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+  Back to companies
+</a>
+
+<!-- Header -->
+<div class="card p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+  <span class="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold shrink-0" style="background:{{ category_color }}">
+    {{ company.name.split(' ')[:2]|map('first')|join('')|upper }}
+  </span>
+  <div class="flex-1">
+    <h1 class="font-display font-bold text-xl text-slate-800">{{ company.name }}</h1>
+    <p class="text-sm text-slate-500 mt-0.5">{{ company.area }} · <span style="color:{{ category_color }}">{{ company.category }}</span></p>
+    <div class="flex flex-wrap gap-2 mt-2">
+      <span class="status-badge {{ STATUS_STYLES.get(company.status, 'bg-slate-100 text-slate-500') }}">{{ company.status }}</span>
+      <span class="status-badge bg-slate-100 text-slate-500">{{ 'Not contacted yet' if company.status == 'Discovered' else 'Contacted' }}</span>
+      {% if company.has_offer %}
+        <span class="status-badge bg-purple-50 text-purple-600">Open offer</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <button id="wishlist-btn" class="btn btn-ghost text-xs">Add to wishlist</button>
+    <a class="btn btn-ghost text-xs" href="{{ url_for('postulations', company_id=company.id, job_id=(offers[0].id if offers else '')) }}">Apply</a>
+    <a class="btn btn-ghost text-xs" href="mailto:{{ company.email }}">Contact</a>
+    <div class="relative">
+      <button id="status-btn" class="btn btn-secondary text-xs">Change status</button>
+      <div id="status-menu" class="hidden absolute right-0 mt-1.5 w-44 card p-1.5 z-10">
+        {% for s in ["Discovered", "Contacted", "Wishlist", "Applied", "Replied", "Interview", "Offer Received"] %}
+          <button class="nav-link w-full text-left status-option" data-status="{{ s }}">{{ s }}</button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="card p-6 mb-6" aria-labelledby="company-360"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 id="company-360" class="font-semibold text-lg">Company 360°</h2><p class="text-sm text-slate-500 mt-2">Company information, current records and your private follow-ups.</p></div></div><nav class="flex flex-wrap gap-3 mt-5 text-sm" aria-label="Company sections"><a class="underline" href="#company-offers">Offers · {{ offers|length }}</a><a class="underline" href="#company-activity">Application history · {{ company_applications|length }}</a></nav><div class="grid lg:grid-cols-2 gap-5 mt-6"><div><h3 class="font-semibold text-sm">Skills found in this company's offers</h3><div class="flex flex-wrap gap-2 mt-3">{% for skill,count in intel.skills %}<a class="text-xs rounded-full bg-purple-50 text-purple-700 px-3 py-2" href="{{ url_for('portfolio',skill=skill) }}">{{ skill }} · {{ count }} offer(s) ↗</a>{% else %}<p class="text-sm text-slate-500">Not enough offer details to identify recurring skills.</p>{% endfor %}</div><p class="text-xs text-slate-500 mt-3">Detected from saved titles and descriptions; these are not requirements for every role.</p></div><div><h3 class="font-semibold text-sm">My upcoming application follow-ups</h3>{% for reminder in company_reminders if not reminder.completed %}<p class="text-sm text-slate-500 mt-3">{{ reminder.position }} · {{ reminder.due_date }} <a class="underline" href="{{ url_for('applications') }}">Manage ↗</a></p>{% else %}<p class="text-sm text-slate-500 mt-3">No pending application reminder.</p>{% endfor %}</div></div></section>
+
+<a class="btn btn-secondary mb-6" href="{{ url_for('ai_studio',company_id=company.id) }}">Analyze my match in AI Studio ↗</a>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+  <!-- Left column -->
+  <div class="xl:col-span-2 space-y-4">
+    <div class="card p-5">
+      <h2 class="font-display font-semibold text-slate-800 mb-3">About</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">{{ company.description }}</p>
+    </div>
+    <div id="company-offers" class="card p-5" style="scroll-margin-top:90px"><h2 class="font-display font-semibold text-slate-800 mb-3">Offers</h2>{% for offer in offers %}<div class="rounded-xl border border-slate-100 p-3 mb-2"><strong class="text-sm">{{ offer.title }}</strong><p class="text-xs text-slate-500 mt-2">Source: {{ offer.source or 'Not recorded' }} · Published: {{ offer.publication_date or 'Not recorded' }}</p>{% set meta=intel.metadata.get(offer.id,{}) %}<p class="text-xs text-slate-500 mt-1">Last checked (UTC): {{ meta.get('last_checked') or 'Not recorded' }}</p><details class="mt-3 text-sm"><summary>Offer description</summary><p class="text-slate-500 mt-2 whitespace-pre-line">{{ offer.description }}</p></details><div class="flex flex-wrap gap-2 mt-3"><a class="btn btn-primary text-xs" href="{{ url_for('postulations',company_id=company.id,job_id=offer.id) }}">Apply to this offer</a><a class="btn btn-secondary text-xs" href="{{ url_for('cv_builder',company_id=company.id,offer_id=offer.id) }}#cv-optimizer-workspace">Tailor my CV</a><a class="btn btn-secondary text-xs" href="{{ url_for('skill_gap',offer_id=offer.id) }}">See missing skills</a><a class="btn btn-secondary text-xs" href="{{ url_for('interview_helper',offer_id=offer.id) }}">Practice this interview</a></div></div>{% else %}<p class="text-sm text-slate-400">No existing offers for this company.</p>{% endfor %}</div>
+    <div id="company-activity" class="card p-5" style="scroll-margin-top:90px"><h2 class="font-display font-semibold text-slate-800 mb-3">Activity timeline</h2>{% for application in company_applications %}<div class="relative border-l-2 border-blue-100 pl-4 pb-4"><span class="absolute -left-1.5 top-1 w-2.5 h-2.5 rounded-full bg-blue-600"></span><p class="text-sm font-semibold">Application created · {{ application.position }}</p><time class="text-xs text-slate-400">{{ application.created_at }}</time>{% for event in application.history %}<p class="text-xs text-slate-500 mt-2">{{ event.created_at }} · {{ event.description }}</p>{% endfor %}</div>{% else %}<p class="text-sm text-slate-400">No recorded activity for this company yet.</p>{% endfor %}</div>
+
+    <div class="card p-5">
+      <h2 class="font-display font-semibold text-slate-800 mb-3">Company location</h2>
+      <p class="text-sm text-slate-500 mb-3">{{ company.address }}</p>
+      <div id="company-detail-map"></div>
+    </div>
+
+    <div class="card p-5">
+      <h2 class="font-display font-semibold text-slate-800 mb-3">Notes</h2>
+      <p class="text-xs text-slate-400 mb-2">Saved on this device only â€” not shared with anyone else.</p>
+      <textarea id="notes-textarea" rows="4"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition"
+                placeholder="Add a note about this companyâ€¦">{{ company.notes }}</textarea>
+      <div class="flex items-center gap-3 mt-3">
+        <button id="save-notes-btn" class="btn btn-primary text-xs">Save notes</button>
+        <span id="notes-saved-msg" class="hidden text-xs text-purple-600">Saved</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div class="space-y-4">
+    <div class="card p-5">
+      <h2 class="font-display font-semibold text-slate-800 mb-3">Contact info</h2>
+      <ul class="space-y-3 text-sm">
+        <li class="flex items-center gap-2.5 text-slate-600">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 shrink-0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg>
+          <a href="https://{{ company.website }}" target="_blank" rel="noopener" class="text-blue-600 hover:text-blue-700 break-all">{{ company.website }}</a>
+        </li>
+        <li class="flex items-center gap-2.5 text-slate-600">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 shrink-0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+          <a href="mailto:{{ company.email }}" class="text-blue-600 hover:text-blue-700 break-all">{{ company.email }}</a>
+        </li>
+        <li class="flex items-center gap-2.5 text-slate-600">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 shrink-0"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.1-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>
+          {% if company.phone %}
+            <a href="tel:{{ company.phone }}" class="text-blue-600 hover:text-blue-700">{{ company.phone }}</a>
+          {% else %}
+            <span class="text-slate-400">Not available</span>
+          {% endif %}
+        </li>
+        <li class="flex items-start gap-2.5 text-slate-600">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400 shrink-0 mt-0.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>{{ company.address }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card p-5">
+      <h2 class="font-display font-semibold text-slate-800 mb-3">At a glance</h2>
+      <dl class="space-y-2.5 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Category</dt>
+          <dd class="font-medium" style="color:{{ category_color }}">{{ company.category }}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Open offer</dt>
+          <dd class="font-medium text-slate-700">{{ 'Yes' if company.has_offer else 'No' }}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Application status</dt>
+          <dd id="glance-status" class="font-medium text-slate-700">{{ company.status }}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-slate-500">Contact status</dt>
+          <dd id="glance-contact" class="font-medium text-slate-700">{{ 'Not contacted yet' if company.status == 'Discovered' else 'Contacted' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  const STATUS_STYLE_CLASSES = {
+    "Discovered": "bg-slate-100 text-slate-500",
+    "Contacted": "bg-blue-50 text-blue-600",
+    "Wishlist": "bg-purple-50 text-purple-500",
+    "Applied": "bg-purple-50 text-purple-600",
+    "Replied": "bg-purple-50 text-purple-600",
+    "Interview": "bg-purple-50 text-purple-600",
+    "Offer Received": "bg-purple-50 text-purple-600",
+  };
+
+  // ---------------------------------------------------------------------
+  // Mini map for this single company
+  // ---------------------------------------------------------------------
+  const detailMap = L.map("company-detail-map", { scrollWheelZoom: false, zoomControl: false })
+    .setView([{{ company.lat }}, {{ company.lng }}], 15);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+    maxZoom: 18,
+  }).addTo(detailMap);
+  L.circleMarker([{{ company.lat }}, {{ company.lng }}], {
+    radius: 9, color: "#fff", weight: 2, fillColor: "{{ category_color }}", fillOpacity: 0.9,
+  }).addTo(detailMap).bindPopup("{{ company.name }}").openPopup();
+
+  // ---------------------------------------------------------------------
+  // Status change (demo â€” client-side only, resets on reload)
+  // ---------------------------------------------------------------------
+  const statusBtn = document.getElementById("status-btn");
+  const statusMenu = document.getElementById("status-menu");
+  statusBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    statusMenu.classList.toggle("hidden");
+  });
+  document.addEventListener("click", () => statusMenu.classList.add("hidden"));
+
+  async function applyStatus(status) {
+    try {
+      const response = await fetch(`/api/companies/{{ company.id }}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "The company status could not be updated.");
+      const resolvedStatus = data.status || status;
+      const badge = document.querySelector(".status-badge");
+      if (badge) {
+        Object.values(STATUS_STYLE_CLASSES).forEach((cls) => badge.classList.remove(...cls.split(" ")));
+        (STATUS_STYLE_CLASSES[resolvedStatus] || "bg-slate-100 text-slate-500").split(" ").forEach((cls) => badge.classList.add(cls));
+        badge.textContent = resolvedStatus;
+      }
+      const glanceStatus = document.getElementById("glance-status");
+      if (glanceStatus) glanceStatus.textContent = resolvedStatus;
+      const contactLabel = resolvedStatus === "Discovered" ? "Not contacted yet" : "Contacted";
+      const glanceContact = document.getElementById("glance-contact");
+      if (glanceContact) glanceContact.textContent = contactLabel;
+    } catch (error) {
+      window.alert(error.message);
+    }
+  }
+
+  document.querySelectorAll(".status-option").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      applyStatus(btn.dataset.status);
+      statusMenu.classList.add("hidden");
+    });
+  });
+  document.getElementById("wishlist-btn").addEventListener("click", () => applyStatus("Wishlist"));
+  // ---------------------------------------------------------------------
+  // Notes â€” persisted locally per company (this browser only)
+  // ---------------------------------------------------------------------
+  const NOTES_KEY = "mc_notes_user_{{ session.user_id }}_company_{{ company.id }}";
+  const notesTextarea = document.getElementById("notes-textarea");
+  const savedNote = localStorage.getItem(NOTES_KEY);
+  if (savedNote !== null) notesTextarea.value = savedNote;
+
+  document.getElementById("save-notes-btn").addEventListener("click", () => {
+    try {
+      localStorage.setItem(NOTES_KEY, notesTextarea.value);
+      const msg = document.getElementById("notes-saved-msg");
+      msg.classList.remove("hidden");
+      setTimeout(() => msg.classList.add("hidden"), 2000);
+    } catch (e) {
+      console.error("Could not save note locally", e);
+    }
+  });
+</script>
+{% endblock %}
+

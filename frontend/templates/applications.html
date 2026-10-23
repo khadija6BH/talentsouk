@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% set page_title = 'Applications' %}
+{% set active_page = 'applications' %}
+{% block title %}Applications — TalentSouk{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account_pages.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline_workspace.css',v='20261021-v1') }}">
+{% endblock %}
+
+{% block content %}
+
+{% set STATUS_STYLES = {
+  "Draft": "bg-blue-50 text-blue-600",
+  "Sent": "bg-violet-50 text-violet-600",
+  "Replied": "bg-purple-50 text-purple-600",
+  "Interview": "bg-purple-50 text-purple-600",
+  "Accepted": "bg-purple-50 text-purple-600",
+  "Rejected": "bg-purple-50 text-purple-600"
+} %}
+
+<section class="account-page pipeline-page" aria-labelledby="applications-title">
+  <header class="workspace-hero"><div><span class="workspace-kicker">YOUR PIPELINE</span><h1 id="applications-title">Keep every opportunity moving.</h1><p>Track applications, replies and your next step.</p></div><a class="btn btn-primary" href="{{ url_for('companies') }}">Add application ＋</a></header>
+  <div class="pipeline-stats">
+   {% set totals=[('▣','Total tracked',applications|length),('◷','In progress',applications|rejectattr('display_status','equalto','Rejected')|rejectattr('display_status','equalto','Accepted')|list|length),('▦','Interviews',applications|selectattr('display_status','equalto','Interview')|list|length),('✧','Offers',applications|selectattr('display_status','equalto','Accepted')|list|length)] %}
+   {% for icon,label,value in totals %}<div class="pipeline-stat"><span class="pipeline-stat-icon" aria-hidden="true">{{ icon }}</span><div><small>{{ label }}</small><strong>{{ value }}</strong></div></div>{% endfor %}
+  </div>
+  <div class="pipeline-toolbar"><label class="flex-1 flex items-center"><span aria-hidden="true">⌕</span><span class="sr-only">Search applications</span><input id="application-search" type="search" placeholder="Search applications…"></label><label><span class="sr-only">Filter status</span><select id="application-status-filter"><option value="all">All statuses</option>{% for status in statuses %}<option>{{ status }}</option>{% endfor %}</select></label><label><span class="sr-only">Sort applications</span><select id="application-sort"><option value="applied-desc">Newest first</option><option value="updated-desc">Recently updated</option><option value="company-asc">Company A–Z</option><option value="status-asc">Status</option><option value="score-desc">AI match</option></select></label><div class="view-switch" aria-label="Application view"><button type="button" data-application-view="board" aria-pressed="true">▥ Board</button><button type="button" data-application-view="list" aria-pressed="false">☷ List</button></div><span id="application-count" class="text-xs text-slate-400" aria-live="polite">{{ applications|length }} applications</span></div>
+  <div id="application-board" class="pipeline-board" data-statuses='{{ statuses|tojson }}' data-add-url="{{ url_for('companies') }}" aria-label="Application pipeline"></div>
+  {% if applications %}
+    <div class="application-table-wrap">
+      <table id="applications-table" class="application-table">
+        <thead>
+          <tr>
+            <th scope="col">Company</th>
+            <th scope="col">Position</th>
+            <th scope="col">Date applied</th>
+            <th scope="col">Status</th>
+            <th scope="col">Last update</th>
+            <th scope="col">AI match</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for application in applications %}
+            <tr data-company="{{ application.company_name|lower }}"
+                data-position="{{ application.position|lower }}"
+                data-status="{{ application.display_status }}"
+                data-applied="{{ application.applied_date }}"
+                data-updated="{{ application.last_update }}"
+                data-score="{{ application.match_score if application.match_score is not none else -1 }}">
+              <td data-label="Company">
+                <a class="application-company" href="{{ application.company_url }}">{{ application.company_name }}</a>
+                <span class="application-category">{{ application.company_category }}</span>
+              </td>
+              <td data-label="Position">
+                <strong>{{ application.position }}</strong>{% if application.cv_version %}<a class="block text-xs text-purple-700 mt-2" target="_blank" rel="noopener" href="{{ url_for('cv_version_view',version_id=application.cv_version.id) }}">CV used · #{{ application.cv_version.id }} · {{ application.cv_version.optimized.offer_title }}</a>{% endif %}
+                <div class="flex items-center gap-1 mt-2 text-[10px]" aria-label="Application timeline">{% set stages=['Draft','Sent','Replied','Interview','Accepted'] %}{% set current={'Draft':0,'Sent':1,'Replied':2,'Interview':3,'Accepted':4,'Rejected':0}.get(application.display_status,0) %}{% for stage in stages %}<span class="rounded-full px-1.5 py-0.5 {{ 'bg-blue-600 text-white' if loop.index0 <= current else 'bg-slate-100 text-slate-400' }}">{{ stage }}</span>{% endfor %}</div>
+                {% if application.application_message %}<details class="mt-2"><summary class="cursor-pointer text-xs text-blue-600">Application message</summary><p class="mt-1 text-xs text-slate-500 whitespace-pre-wrap">{{ application.application_message }}</p></details>{% endif %}
+                {% if application.cover_letter_used %}<details class="mt-2"><summary class="cursor-pointer text-xs text-blue-600">Cover letter</summary><p class="mt-1 text-xs text-slate-500 whitespace-pre-wrap max-h-72 overflow-y-auto">{{ application.cover_letter_used }}</p></details>{% endif %}
+                {% if application.history %}<details class="mt-2"><summary class="cursor-pointer text-xs text-blue-600">Activity ({{ application.history|length }})</summary>{% for event in application.history %}<p class="mt-1 text-xs text-slate-500">{{ event.created_at[:16] }} · {{ event.description }}</p>{% endfor %}</details>{% endif %}
+              </td>
+              <td data-label="Date applied" data-value="{{ application.applied_date }}">{{ application.applied_date[:10] if application.applied_date else "—" }}</td>
+              <td data-label="Status"><span class="application-status {{ STATUS_STYLES.get(application.display_status, 'bg-slate-100 text-slate-500') }}">{{ application.display_status }}</span><select class="tracking-status mt-2 text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white" data-id="{{ application.id }}" aria-label="Update status for {{ application.position }}">{% for status in statuses %}<option value="{{ status }}" {{ 'selected' if status == application.display_status }}>{{ status }}</option>{% endfor %}</select></td>
+              <td data-label="Last update" data-value="{{ application.last_update }}">{{ application.last_update[:10] if application.last_update else "—" }}</td>
+              <td data-label="AI match">
+                {% if application.match_score is not none %}
+                  <span class="application-match-score">{{ application.match_score }}%</span>
+                {% else %}
+                  <span class="application-unscored">Not scored</span>
+                {% endif %}
+                <div class="mt-2"><button class="add-reminder text-xs text-blue-600" data-id="{{ application.id }}">+ Follow-up</button>{% for reminder in application.reminders if not reminder.completed %}<p class="text-[10px] text-purple-700 mt-1">Due {{ reminder.due_date }}</p>{% endfor %}</div>
+                {% if application.display_status == 'Draft' and application.cv_used and application.cover_letter_used %}<button class="send-gmail btn btn-secondary text-xs mt-2" data-id="{{ application.id }}">Send with Gmail</button>{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p id="applications-no-results" class="account-empty hidden">No applications match these filters.</p>
+  {% else %}
+    <div class="account-empty-state card">
+      <h2 class="font-display font-semibold text-slate-800">No applications yet</h2>
+      <p class="text-sm text-slate-500 mt-1">Prepare an application for a real offer or contact a company spontaneously.</p>
+      <a class="btn btn-primary mt-4" href="{{ url_for('companies') }}">Browse companies</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/account_pages.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/application_board.js',v='20261021-v1') }}" defer></script>
+<script>document.querySelectorAll('.add-reminder').forEach(button=>button.addEventListener('click',async()=>{const choice=prompt('Follow-up date (YYYY-MM-DD). Tomorrow, in 3 days, next week, or any custom date:');if(!choice)return;let due=new Date();if(choice.toLowerCase()==='tomorrow')due.setDate(due.getDate()+1);else if(['3','3 days','in 3 days'].includes(choice.toLowerCase().trim()))due.setDate(due.getDate()+3);else if(choice.toLowerCase().includes('week'))due.setDate(due.getDate()+7);else due=new Date(choice+'T00:00:00');if(Number.isNaN(due.getTime()))return alert('Enter a valid date.');const date=due.toISOString().slice(0,10);const response=await fetch('/api/reminders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({application_id:button.dataset.id,due_date:date})});if(response.ok)location.reload();else alert((await response.json()).error);}));</script>
+<script>document.querySelectorAll('.send-gmail').forEach(button=>button.addEventListener('click',async()=>{if(!confirm('Send this exact application through Gmail now? The saved CV and cover letter will be attached.'))return;button.disabled=true;button.textContent='Sending...';const response=await fetch(`/api/postulations/${button.dataset.id}/send`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirmed:true})});const data=await response.json();if(response.status===401&&data.connect_url){window.location.href=data.connect_url;return;}if(response.ok){alert(data.message);location.reload();return;}button.disabled=false;button.textContent='Send with Gmail';alert(data.error||'Gmail could not send the application.');}));</script>
+<script>document.querySelectorAll('.tracking-status').forEach(select=>select.addEventListener('change',async()=>{select.disabled=true;const response=await fetch(`/api/applications/${select.dataset.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:select.value})});const data=await response.json();if(response.ok){location.reload();return;}select.disabled=false;alert(data.error||'The status could not be updated.');}));</script>
+{% endblock %}

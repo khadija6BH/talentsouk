@@ -1,0 +1,506 @@
+.account-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.account-page-heading,
+.current-cv,
+.profile-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.account-actions .btn {
+  font-size: 0.78rem;
+  padding: 0.55rem 0.75rem;
+}
+
+.profile-hero {
+  display: grid;
+  grid-template-columns: auto minmax(12rem, 0.8fr) minmax(18rem, 1.2fr);
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.35rem;
+}
+
+.profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-avatar-fallback {
+  background: #E6E6FA;
+  color: #673147;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.profile-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.profile-identity h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-email {
+  color: #673147;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.profile-email:hover {
+  text-decoration: underline;
+}
+
+.profile-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.profile-objective {
+  min-width: 0;
+  padding-left: 1.1rem;
+  border-left: 2px solid #D8C7D8;
+}
+
+.profile-kicker {
+  color: #673147;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.profile-objective p {
+  margin: 0.35rem 0 0;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.profile-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.account-section {
+  min-width: 0;
+  padding: 1rem 1.1rem;
+}
+
+.account-section h2 {
+  margin: 0 0 0.6rem;
+  color: #334155;
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.account-copy {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.current-cv {
+  padding: 1rem 1.1rem;
+}
+
+.current-cv h2 {
+  margin: 0;
+}
+
+.profile-dialog {
+  width: min(100% - 2rem, 44rem);
+  max-height: min(90vh, 54rem);
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.8rem;
+  background: #fff;
+  color: #1e293b;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 22%);
+}
+
+.profile-dialog::backdrop {
+  background: rgb(15 23 42 / 45%);
+}
+
+.profile-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-height: min(90vh, 54rem);
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.profile-dialog-heading h2 {
+  margin: 0;
+}
+
+.profile-close {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.profile-close:hover {
+  background: #f1f5f9;
+}
+
+.account-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.account-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.account-field input,
+.account-field textarea,
+.account-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #dbe3ed;
+  border-radius: 0.5rem;
+  outline: none;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.account-field textarea {
+  min-height: 4.3rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.account-field input:focus,
+.account-field textarea:focus,
+.account-field select:focus {
+  border-color: #A18F93;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+}
+
+.profile-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.application-toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.application-search {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1 1 18rem;
+  min-width: 12rem;
+  height: 2.65rem;
+  padding: 0 0.75rem;
+  border: 1px solid #dbe3ed;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: #A18F93;
+}
+
+.application-search:focus-within {
+  border-color: #A18F93;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+}
+
+.application-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #334155;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.application-filter-label {
+  display: grid;
+  gap: 0.3rem;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.application-filter {
+  min-width: 9rem;
+  height: 2.65rem;
+  padding: 0 0.7rem;
+  border: 1px solid #dbe3ed;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.application-count {
+  margin-left: auto;
+  padding-bottom: 0.65rem;
+  color: #64748b;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.application-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e8edf5;
+  border-radius: 0.7rem;
+  background: #fff;
+}
+
+.application-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 54rem;
+}
+
+.application-table th {
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid #e8edf5;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.69rem;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.application-table td {
+  padding: 0.85rem 0.9rem;
+  border-bottom: 1px solid #eef1f6;
+  color: #475569;
+  font-size: 0.8rem;
+  vertical-align: middle;
+}
+
+.application-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.application-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.application-company {
+  display: block;
+  color: #1e293b;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.application-company:hover {
+  color: #673147;
+  text-decoration: underline;
+}
+
+.application-category {
+  display: block;
+  margin-top: 0.2rem;
+  color: #A18F93;
+  font-size: 0.68rem;
+}
+
+.application-status {
+  display: inline-flex;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.application-match-score {
+  color: #673147;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.application-unscored {
+  color: #A18F93;
+  font-size: 0.73rem;
+}
+
+.account-empty-state,
+.account-empty {
+  padding: 2rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.account-empty-state h2 {
+  margin: 0;
+}
+
+.account-empty[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .profile-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .profile-objective {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .account-page-heading,
+  .current-cv {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-actions {
+    justify-content: flex-start;
+  }
+
+  .profile-hero {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+
+  .profile-objective {
+    grid-column: auto;
+    padding-left: 0.8rem;
+  }
+
+  .profile-sections,
+  .account-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-search {
+    flex-basis: 100%;
+  }
+
+  .application-filter-label {
+    flex: 1 1 8rem;
+  }
+
+  .application-filter {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .application-count {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.profile-skill-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.profile-skill-options label {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #dbe3ed;
+  border-radius: 0.5rem;
+  color: #475569;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.profile-skill-options label:has(input:checked) {
+  border-color: #673147;
+  background: #E6E6FA;
+  color: #311432;
+}
+
+@media (max-width: 640px) {
+  .profile-skill-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.profile-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.profile-section-heading h2 { margin: 0; }
+
+.profile-section-edit {
+  border: 0;
+  background: transparent;
+  color: #673147;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.profile-section-edit:hover { color: #311432; text-decoration: underline; }

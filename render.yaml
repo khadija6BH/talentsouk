@@ -1,0 +1,32 @@
+# Paid production configuration: review Render's displayed quote before applying.
+services:
+  - type: web
+    name: talentsouk
+    runtime: docker
+    plan: 0.5c-512mb
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    numInstances: 1
+    disk:
+      name: talentsouk-uploads
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: STORAGE_ROOT
+        value: /data
+      - key: SESSION_COOKIE_SECURE
+        value: "1"
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: DATABASE_BACKEND
+        value: postgres
+      - key: DATABASE_SCHEMA
+        value: talentsouk
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_BASE_URL
+        sync: false

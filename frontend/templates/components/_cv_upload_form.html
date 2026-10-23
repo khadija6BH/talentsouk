@@ -1,0 +1,17 @@
+{# Reusable CV upload form. Included by cv_builder.html for both the
+   first-upload state and the "Replace" flow. #}
+<div class="card p-6">
+  <form method="post" action="{{ url_for('cv_upload') }}" enctype="multipart/form-data" class="flex flex-col items-center text-center">
+    <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#673147" stroke-width="1.8"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    </div>
+    <h3 class="font-display font-semibold text-slate-800 mb-1">Upload your CV</h3>
+    <p class="text-sm text-slate-500 mb-4 max-w-sm">PDF, DOC, or DOCX, up to 5 MB. The original file is preserved; readable text is extracted from PDF and DOCX files.</p>
+    <label class="btn btn-secondary cursor-pointer mb-2">
+      <input type="file" name="cv_file" accept=".pdf,.doc,.docx" required class="hidden" onchange="this.form.querySelector('.file-chosen-label').textContent = this.files[0] ? this.files[0].name : ''; this.form.querySelector('button[type=submit]').disabled = false;">
+      Choose file
+    </label>
+    <p class="file-chosen-label text-xs text-slate-500 mb-4 min-h-[1rem]"></p>
+    <button type="submit" class="btn btn-primary" disabled>Upload CV</button>
+  </form>
+</div>

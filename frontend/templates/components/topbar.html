@@ -1,0 +1,70 @@
+{# Reusable topbar. Expects `active_page` in context for the page title. #}
+<header class="app-topbar sticky top-0 z-20 h-16 bg-white/80 backdrop-blur border-b border-slate-100 flex items-center gap-4 px-4 lg:px-8">
+
+  <div class="topbar-brand flex items-center gap-2 shrink-0">
+    <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2" aria-label="TalentSouk home"><img src="{{ url_for('static', filename='images/talentsouk-logo.png') }}" alt="" width="32" height="32" class="h-8 w-8 object-contain"><span class="font-display font-bold text-sm">TalentSouk</span></a>
+    <button id="sidebar-open-btn" type="button" class="p-2 rounded-lg text-slate-600 hover:bg-purple-50 flex items-center gap-1" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="text-xs">Menu</span></button>
+  </div>
+
+  <!-- Page title (visible on larger screens) -->
+  <h1 class="hidden sm:block font-display font-semibold text-slate-800 text-lg capitalize truncate max-w-48">
+    {{ page_title or (active_page.replace('_', ' ') if active_page else '') }}
+  </h1>
+
+  <!-- Search bar -->
+  <div class="flex-1 flex justify-center px-2">
+    <div id="global-search" class="relative w-full max-w-md">
+      <label class="relative block w-full">
+      <span class="sr-only">Search</span>
+      <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="global-search-input" type="search" role="combobox" aria-autocomplete="list"
+               aria-expanded="false" aria-controls="global-search-results" autocomplete="off"
+               placeholder="Search companies, applications, offers, contacts…"
+               class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition">
+      </label>
+      <div id="global-search-results" class="hidden absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg" role="region" aria-label="Search results" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Right actions -->
+  <div class="topbar-actions flex items-center gap-2">
+    <label class="sr-only" for="language-selector">Language</label>
+    <select id="language-selector" class="hidden sm:block bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600" aria-label="Language">
+      <option value="ar" {{ 'selected' if ui_language == 'ar' }}>العربية</option>
+      <option value="fr" {{ 'selected' if ui_language == 'fr' }}>Français</option>
+      <option value="en" {{ 'selected' if ui_language == 'en' }}>English</option>
+    </select>
+    <div class="relative" id="notification-center">
+    <button id="notification-trigger" type="button" aria-controls="notification-menu" class="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Notifications" aria-expanded="false">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span id="notification-badge" class="{{ 'hidden' if not unread_notification_count }} absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-purple-600 text-white text-[10px] grid place-items-center">{{ unread_notification_count }}</span>
+    </button>
+    <div id="notification-menu" class="hidden absolute right-0 mt-2 w-[min(22rem,90vw)] card p-2 z-50">
+      <div class="flex items-center justify-between px-2 py-2 border-b border-slate-100"><strong class="text-sm">Notifications</strong><div class="flex gap-2"><button class="notification-action text-xs text-blue-600" data-action="read_all">Mark all read</button><button class="notification-action text-xs text-purple-600" data-action="clear">Clear</button></div></div>
+      <div id="notification-list" aria-live="polite" class="max-h-80 overflow-y-auto">
+      {% for notification in navbar_notifications %}<a href="{{ notification.url or '#' }}" class="notification-item block p-3 rounded-lg hover:bg-slate-50 {{ 'opacity-60' if notification.is_read }}" data-id="{{ notification.id }}"><div class="flex justify-between gap-2"><span class="text-sm font-semibold text-slate-700">{{ notification.title }}</span><time class="text-[10px] text-slate-400">{{ notification.created_at[:16] }}</time></div><p class="text-xs text-slate-500 mt-1">{{ notification.message }}</p></a>{% else %}<p class="p-5 text-center text-sm text-slate-400">No notifications yet.</p>{% endfor %}
+      </div>
+      <a href="{{ url_for('settings') }}#notifications" class="block p-2 text-xs text-blue-600 border-t border-slate-100">Notification settings</a>
+      <p id="notification-error" class="hidden p-2 text-xs text-red-600" role="alert"></p>
+    </div></div>
+
+    <div class="relative">
+      <button id="profile-menu-trigger" class="flex items-center gap-2 p-1 pr-2 rounded-xl hover:bg-slate-100">
+        {% if current_user %}<img class="w-8 h-8 rounded-full object-cover" src="{{ current_user.avatar_url }}" alt="Your profile avatar">{% else %}<span class="w-8 h-8 rounded-full flex items-center justify-center">?</span>{% endif %}
+        <svg class="hidden sm:block text-slate-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div id="profile-menu" class="hidden absolute right-0 mt-2 w-52 card p-1.5">
+        {% if current_user %}
+          <div class="px-3 py-2 mb-1 border-b border-slate-100">
+            <p class="text-sm font-semibold text-slate-800 truncate">{{ current_user.full_name }}</p>
+            <p class="text-xs text-slate-400 truncate">{{ current_user.email }}</p>
+          </div>
+        {% endif %}
+        <a href="{{ url_for('profile') }}" class="nav-link">Your profile</a>
+        <a href="{{ url_for('settings') }}" class="nav-link">Settings</a>
+        <div class="my-1 border-t border-slate-100"></div>
+        <a href="{{ url_for('logout') }}" class="nav-link text-purple-500 hover:bg-purple-50 hover:text-purple-600">Sign out</a>
+      </div>
+    </div>
+  </div>
+</header>

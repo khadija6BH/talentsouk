@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html data-theme="{{ appearance.theme }}" data-mode="{{ appearance.mode }}" lang="{{ ui_language }}" dir="{{ 'rtl' if ui_language == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="UTF-8">
+  <script src="{{ url_for('static',filename='js/appearance.js',v='20261023-v1') }}"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TalentSouk{% endblock %}</title>
+
+  <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='images/talentsouk-favicon.png') }}">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            blue: {
+              50: '#E6E6FA', 100: '#D8C7D8', 200: '#D8C7D8', 300: '#D8C7D8', 400: '#A18F93', 500: '#A18F93',
+              600: '#673147',
+              700: '#311432', 800: '#311432',
+            },
+            purple: {
+              50: '#E6E6FA', 100: '#D8C7D8', 200: '#D8C7D8', 300: '#D8C7D8', 400: '#A18F93', 500: '#A18F93',
+              600: '#673147', 700: '#311432', 800: '#311432',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            display: ['Manrope', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Global stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20261014-jobs2') }}">
+
+  {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-polish.css', v='20261014-jobs2') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/mobile.css',v='20261014-mobile3') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/palette-accents.css',v='20261023-page-themes') }}">
+  {% if active_page in ['dashboard','profile','settings'] %}<link rel="stylesheet" href="{{ url_for('static',filename='css/workspace_background.css',v='20261023-moroccan') }}">{% endif %}
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/appearance.css',v='20261023-v1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/tutorial.css',v='20261023-v1') }}">
+</head>
+<body data-view="{{ request.endpoint|default('home') }}" data-page="{{ active_page|default('home') }}" class="bg-[#F7F8FB] text-slate-800 {{ 'dashboard-editorial' if active_page in ['dashboard','companies','opportunity_radar'] else '' }}">
+
+  <div class="min-h-screen lg:flex">
+    {% include "components/sidebar.html" %}
+
+    <div id="app-content" class="w-full flex flex-col min-h-screen">
+      {% include "components/topbar.html" %}
+
+      <main class="app-main flex-1 px-4 py-6 lg:px-8 lg:py-8">
+        {% include 'components/back_button.html' %}
+        {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="mb-4 rounded-xl border px-4 py-3 text-sm {{ 'border-purple-200 bg-purple-50 text-purple-700' if category == 'error' else 'border-purple-200 bg-purple-50 text-purple-700' }}" role="alert">{{ message }}</div>{% endfor %}{% endwith %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  {% include 'components/language_scripts.html' %}
+  <script src="{{ url_for('static', filename='js/app.js', v='20261023-notifications2') }}"></script>
+  <script src="{{ url_for('static', filename='js/workflow.js') }}"></script>
+  {% block scripts %}{% endblock %}
+  {% include 'components/tutorial_guide.html' %}
+</body>
+</html>

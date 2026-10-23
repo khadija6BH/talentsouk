@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Job offers — TalentSouk{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/dashboard_editorial.css',v='20261015-menu2') }}">
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/job_opportunities.css',v='20261014-jobs-polish') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/jobs_directory.css',v='20261015') }}">
+<section id="radar-workspace" aria-labelledby="radar-title" data-completed="{{ watcher.get('last_finished') or '' }}">
+  <header class="jobs-intro">
+    <div><span class="jobs-kicker">FIND YOUR NEXT ROLE</span><h1 id="radar-title">Job offers</h1><p>Find an offer, explore the company, then prepare your application.</p><a href="#profile-companies" class="jobs-intro-link">Companies for your profile <span aria-hidden="true">↓</span></a></div>
+
+  </header>
+  <form method="get" id="radar-search" aria-label="Search saved offers" class="radar-search card">
+    <div class="radar-search-heading"><h2>Search offers</h2><a href="{{ url_for('opportunity_radar') }}" class="radar-reset">Reset filters</a></div>
+    <div class="radar-query-row"><label for="radar-query" class="sr-only">Job title or keyword</label><div class="radar-query-field"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input id="radar-query" name="q" type="search" value="{{ search }}" placeholder="Job title, company or keyword"></div><button class="btn btn-primary" type="submit"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><span class="radar-button-label">Find offers</span><span class="radar-spinner" aria-hidden="true"></span></button></div>
+    <div class="radar-filters">{% for key,label,options in [('source','Source',sources),('location','Location',locations),('contract','Contract',contracts)] %}<label for="radar-{{ key }}">{{ label }}<select id="radar-{{ key }}" name="{{ key }}"><option value="">All</option>{% for option in options %}<option value="{{ option }}" {{ 'selected' if filters[key]==option }}>{{ option }}</option>{% endfor %}</select></label>{% endfor %}</div>
+  </form>
+
+  <div class="radar-sync-strip"><div class="radar-sync-copy"><span class="radar-sync-dot" aria-hidden="true"></span><div><strong>Automatic updates every hour</strong><p>While the local app is running. Matching new offers appear in your notifications.</p></div></div><a class="btn btn-secondary" href="{{ url_for('profile') }}">Set my target job and career field</a></div>
+  <div id="radar-new-offers" class="radar-new-offers hidden" role="status"><p>New offers are ready.</p><button class="btn btn-primary" type="button">Show latest offers</button></div>
+
+  <details class="radar-import" id="radar-sources">
+    <summary><span>Sources & updates</span><span class="radar-summary-hint">Import new offers</span><span class="radar-chevron" aria-hidden="true">⌄</span></summary>
+    <div class="radar-import-body">
+      {% if watcher.last_finished %}<p class="radar-meta">Last automatic check (UTC): {{ watcher.last_finished }}</p>{% endif %}
+      {% if source_checks %}<details class="radar-source-checks"><summary>Source update status</summary>{% for check in source_checks %}<p>{{ check.provider }} · {{ check.status }} · {{ check.message }}</p>{% endfor %}</details>{% endif %}
+      <h2>Import new offers</h2><p class="radar-meta">Only offers in Morocco are saved. Some sources may return no eligible offers.</p>
+      <div class="radar-source-status" aria-label="Source configuration"><span>Jooble · {{ 'Configured' if source_status.jooble else 'Key required' }}</span><span>Adzuna · {{ 'Configured' if source_status.adzuna else 'Credentials required' }}</span><span>Arbeitnow · No key needed</span><span>Jobicy · No key needed</span></div>
+      <form method="post" action="{{ url_for('opportunity_radar_refresh') }}" id="radar-refresh" class="radar-import-form">
+        <label for="import-source">Import source<select id="import-source" name="provider"><option value="local_csv">Local offers file</option><option value="jooble" {{ 'disabled' if not source_status.jooble }}>Jooble — Morocco{{ ' (key required)' if not source_status.jooble }}</option><option value="adzuna" {{ 'disabled' if not source_status.adzuna }}>Adzuna — International{{ ' (credentials required)' if not source_status.adzuna }}</option><option value="arbeitnow">Arbeitnow — Germany</option><option value="jobicy">Jobicy — Remote</option></select></label>
+        <label for="import-country">Country<select id="import-country" name="country">{% for code,name in countries.items() %}<option value="{{ code }}">{{ name }}</option>{% endfor %}</select></label>
+        <label>Job title or keyword<input name="keyword" maxlength="200" placeholder="Developer, marketing, data…"></label><label>City or region (optional)<input name="city" maxlength="200" placeholder="Marrakech, Casablanca, Rabat…"></label>
+        <p id="source-help" class="radar-meta">The local file is read without contacting job websites.</p><div><button class="btn btn-primary" type="submit"><span class="radar-button-label">Refresh offers</span><span class="radar-spinner" aria-hidden="true"></span></button></div>
+      </form>
+    </div>
+  </details>
+
+  <div class="jobs-layout"><div class="jobs-results">
+  <div class="radar-results-heading" id="radar-results"><div><h2>Available opportunities</h2><p role="status">{{ total }} offers · Page {{ page }} of {{ pages }}</p></div>{% if last_refresh %}<p class="radar-meta">Last refresh (UTC): {{ last_refresh.checked_at }}</p>{% endif %}</div>
+  <div class="radar-offer-grid">
+    {% for offer in offers %}<article class="radar-offer card" data-offer-card="{{ offer.id }}" style="--radar-delay:{{ [loop.index0*35,210]|min }}ms">
+      <div class="radar-offer-source"><span>{% if offer.source=='Jobicy' %}<a href="https://jobicy.com" target="_blank" rel="noopener noreferrer">Jobicy</a>{% else %}{{ offer.source or 'Not recorded' }}{% endif %}</span><span class="radar-meta">Published: {{ (offer.publication_date or 'Not recorded')[:10] }}</span></div>
+      <h3><a data-i18n-skip href="{{ url_for('opportunity_detail',offer_id=offer.id) }}">{{ offer.title }}</a></h3><p class="radar-company" {{ 'data-i18n-skip' if offer.company_name }}>{{ offer.company_name or 'Company not specified' }}</p>
+      <div class="radar-offer-tags"><span {{ 'data-i18n-skip' if offer.location }}>{{ offer.location or 'Location not specified' }}</span><span>{{ offer.offer_type or 'Contract not specified' }}</span></div>
+      <div class="radar-offer-primary"><button class="offer-preview-button btn btn-secondary" type="button" aria-pressed="false" aria-controls="job-preview-panel">Offer details</button><a class="btn btn-primary" href="{{ url_for('opportunity_detail',offer_id=offer.id) }}">View offer <span aria-hidden="true">↗</span></a>{% if offer.company_id %}<a class="btn btn-secondary" href="{{ url_for('postulations',company_id=offer.company_id,job_id=offer.id) }}">Prepare application</a>{% endif %}</div>
+      <details class="radar-offer-more"><summary>More actions</summary><div class="radar-offer-tools"><a href="{{ url_for('skill_gap',offer_id=offer.id) }}">Analyze missing skills</a><a href="{{ url_for('interview_helper',offer_id=offer.id) }}">Practice this interview</a>{% if offer.company_id %}<a href="{{ url_for('company_detail',company_id=offer.company_id) }}">View company</a>{% endif %}{% if offer.safe_url %}<a href="{{ offer.safe_url }}" target="_blank" rel="noopener noreferrer">Original offer ↗</a>{% endif %}</div>{% if offer.description %}<details class="radar-description"><summary>Offer details</summary><p data-i18n-skip>{{ offer.description }}</p></details>{% endif %}<p class="radar-meta">Last checked (UTC): {{ offer.last_checked or 'Not recorded' }}</p></details>
+    </article>{% else %}<div class="card radar-empty"><span aria-hidden="true">⌕</span><h3>No offers found</h3><p>Try another keyword or reset the filters.</p><a class="btn btn-primary" href="{{ url_for('opportunity_radar') }}">Reset filters</a></div>{% endfor %}
+  </div>
+  {% if pages>1 %}<nav class="radar-pagination" aria-label="Offer pages">{% if page>1 %}<a class="btn btn-secondary" href="{{ url_for('opportunity_radar',q=search,source=filters.source,location=filters.location,contract=filters.contract,page=page-1) }}#radar-results">Previous</a>{% endif %}<span>Page {{ page }} of {{ pages }}</span>{% if page<pages %}<a class="btn btn-primary" href="{{ url_for('opportunity_radar',q=search,source=filters.source,location=filters.location,contract=filters.contract,page=page+1) }}#radar-results">Next</a>{% endif %}</nav>{% endif %}  </div>
+  <aside id="job-preview-panel" class="job-preview-panel" aria-label="Offer details"></aside></div>
+  <aside class="jobs-matching" id="profile-companies"><h2>Find companies for your profile</h2><a class="btn btn-secondary mt-4" href="{{ url_for('ai_studio',tab='recommendations') }}">Open AI Studio ↗</a></aside>
+
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static',filename='js/dashboard_layout.js',v='20261015') }}" defer></script><script src="{{ url_for('static',filename='js/jobs_directory.js',v='20261015') }}" defer></script><script src="{{ url_for('static',filename='js/opportunity_radar.js',v='20261014-radar') }}"></script>{% endblock %}

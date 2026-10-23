@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% set page_title = 'CRM & Follow-ups' %}
+{% block title %}CRM & Follow-ups — TalentSouk{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crm.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline_workspace.css',v='20261021-v1') }}">
+{% endblock %}
+
+{% block content %}
+{% include "components/crm_tabs.html" %}
+<p class="mb-4 text-sm"></p>
+<script>window.APPLICATION_STATUSES = {{ application_statuses|tojson }};</script>
+<section class="crm-page relations-page" aria-labelledby="crm-title">
+ <header class="workspace-hero"><div><span class="workspace-kicker">RELATIONSHIPS</span><h1 id="crm-title">Turn conversations into opportunities.</h1><p>Your contacts, conversations and follow-ups.</p></div><div class="flex flex-wrap items-center gap-3"><a href="{{ url_for('career_copilot') }}" class="btn btn-secondary crm-career-plan">My career plan ↗</a><button id="add-application-btn" class="btn btn-primary" type="button">Add contact ＋</button></div></header>
+ <p id="crm-error" class="crm-error hidden" role="alert"></p>
+ <div class="relations-layout"><div><div class="crm-toolbar"><label class="crm-search"><span aria-hidden="true">⌕</span><span class="sr-only">Search contacts</span><input id="crm-search" type="search" placeholder="Search contacts or companies…"></label><label class="crm-filter-label">Status<select id="crm-status-filter" class="crm-filter"><option value="all">All statuses</option></select></label><label class="crm-filter-label">Category<select id="crm-category-filter" class="crm-filter"><option value="all">All categories</option></select></label></div><p id="crm-results" class="text-xs text-slate-400 mb-3" aria-live="polite"></p><div id="crm-board" class="relation-list" aria-label="Contacts"></div></div><aside id="contact-detail" class="relation-detail" aria-label="Contact details" aria-live="polite"><div class="relation-empty">Select a contact to view details.</div></aside></div>
+</section>
+<dialog id="interaction-dialog" class="crm-dialog"><form id="interaction-form" class="crm-dialog-form"><h2 class="text-xl font-semibold">Add interaction</h2><label class="crm-field">Date<input id="interaction-date" type="date" required></label><label class="crm-field">What happened?<textarea id="interaction-note" rows="4" maxlength="1500" required placeholder="A call, email or meeting…"></textarea></label><p id="interaction-error" role="alert" class="crm-error hidden"></p><div class="crm-dialog-actions"><button id="interaction-cancel" type="button" class="btn btn-secondary">Cancel</button><button type="submit" class="btn btn-primary">Save interaction</button></div></form></dialog>
+<dialog id="application-dialog" class="crm-dialog">
+  <form id="application-form" class="crm-dialog-form">
+    <div class="crm-dialog-heading">
+      <div>
+        <p class="crm-eyebrow">CONTACT DETAILS</p>
+        <h2 id="application-dialog-title" class="font-display font-bold text-xl text-slate-800">Add contact</h2>
+      </div>
+      <button id="close-application-dialog" class="crm-icon-button" type="button" aria-label="Close dialog" title="Close">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 6-12 12M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <input id="application-id" type="hidden">
+    <label id="company-field" class="crm-field">Company
+      <select id="application-company" required>
+        <option value="">Choose a company</option>
+        {% from 'components/company_options.html' import company_options with context %}{{ company_options(companies,crm=true) }}
+      </select>
+    </label>
+    <div class="crm-form-row">
+      <label class="crm-field">Contact email
+        <input id="application-email" type="email" maxlength="254" placeholder="recruitment@company.ma">
+      </label>
+      <label class="crm-field">Last contact date
+        <input id="application-last-contact" type="date">
+      </label>
+    </div>
+    <label class="crm-field">Next follow-up<input id="application-followup" type="date"></label>
+    <label class="crm-field">Current status
+      <select id="application-status" required>
+        {% for status in ["Wishlist", "Draft", "Sent", "Replied", "Interview", "Accepted", "Rejected"] %}
+          <option value="{{ status }}">{{ status }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="crm-field">Notes
+      <textarea id="application-notes" rows="4" maxlength="3000" placeholder="Follow-up details, interview notes, or next steps"></textarea>
+    </label>
+    <p id="application-form-error" class="crm-error hidden" role="alert"></p>
+    <div class="crm-dialog-actions">
+      <button id="delete-application-btn" class="btn btn-ghost hidden" type="button">Delete</button>
+      <button id="cancel-application-dialog" class="btn btn-ghost" type="button">Cancel</button>
+      <button id="save-application-btn" class="btn btn-primary" type="submit">Save contact</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/crm_contacts.js', v='20261023-domains') }}" defer></script>
+{% endblock %}

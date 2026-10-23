@@ -1,0 +1,948 @@
+{% extends "base.html" %}
+{% block title %}Companies — TalentSouk{% endblock %}
+
+{% block content %}
+
+<div class="companies-directory">
+<!-- Header -->
+<div class="companies-intro mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  <div>
+    <span class="directory-eyebrow">Companies</span><h2 class="font-display font-bold text-2xl text-slate-800">Companies</h2>
+    <p class="text-slate-500 text-sm mt-1">Explore companies in Morocco. Official websites appear first.</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-3"><p id="results-count" class="text-sm text-slate-500 whitespace-nowrap"></p><button type="button" class="btn btn-secondary reset-company-filters">Show all companies</button></div>
+</div>
+
+<!-- Filters -->
+<div class="directory-filters card p-5 mb-6">
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <button id="tech-companies-btn" class="btn btn-secondary company-action" type="button" aria-pressed="false">
+      <span aria-hidden="true">&lt;/&gt;</span><span>Tech companies</span>
+    </button>
+    <select id="filter-tech-specialty" class="filter-select hidden" aria-label="Filter technology companies by specialty">
+      <option value="all">All tech specialties</option>
+    </select>
+    <button id="clear-tech-filter" class="btn btn-ghost text-xs hidden" type="button">Clear tech filter</button>
+  </div>
+  <div class="relative mb-4">
+    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="filter-search" type="text" autocomplete="off" placeholder="Search by company, domain, industry or skill…"
+           class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition">
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+    <select id="filter-location" class="filter-select">
+      <option value="all">All locations</option>
+    </select>
+    <select id="filter-domain" class="filter-select" aria-label="Filter companies by domain">
+      <option value="all">All domains</option>
+      <option value="Génie civil">Génie civil</option>
+      <option value="Construction / BTP">Construction / BTP</option>
+    </select>
+    <select id="filter-offer" class="filter-select">
+      <option value="all">Offer: any</option>
+      <option value="yes">Has open offer</option>
+      <option value="no">No open offer</option>
+    </select>
+    <select id="filter-contact" class="filter-select">
+      <option value="all">Contact info: any</option>
+      <option value="email">Has email</option>
+      <option value="phone">Has phone</option>
+      <option value="both">Has email &amp; phone</option>
+    </select>
+    <select id="filter-source" class="filter-select" aria-label="Filter by recruitment source"><option value="all">All sources</option>{% for source in source_options %}<option value="{{ source }}">{{ source }}</option>{% endfor %}</select>
+    <select id="filter-sort" class="filter-select" aria-label="Sort companies"><option value="website">Official websites first</option><option value="name">Company name A–Z</option><option value="civil">Génie civil first</option><option value="construction">Construction / BTP first</option></select>
+  </div>
+</div>
+
+<!-- Companies grid -->
+<div id="companies-grid" class="companies-grid grid grid-cols-1 lg:grid-cols-2 gap-4" aria-live="polite"></div>
+{% if data_unavailable %}
+<div class="card border border-purple-200 bg-purple-50 p-5 text-sm text-purple-800" role="alert">
+  Company data is temporarily unavailable. Check the local database or try again shortly.
+</div>
+{% endif %}
+
+<!-- No results -->
+<div id="no-results-state" class="hidden card flex flex-col items-center justify-center text-center px-6 py-16 mt-4">
+  <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-5">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#673147" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+  </div>
+  <h2 class="font-display font-semibold text-slate-800 text-lg mb-1.5">No companies match your filters</h2>
+  <p class="text-sm text-slate-500 max-w-sm">Try widening your search or resetting a filter.</p>
+</div>
+
+<!-- Load more -->
+<div class="card p-5 mt-6 text-center">
+  <p id="companies-page-count" class="text-sm text-slate-500 mb-3" role="status"></p>
+  <div class="flex flex-wrap justify-center gap-3">
+  <button id="load-more-btn" class="btn btn-primary company-action" type="button">
+    <span class="action-label">Load more companies</span><span class="action-spinner" aria-hidden="true"></span>
+  </button>
+  <button type="button" class="btn btn-secondary reset-company-filters">Show all companies</button>
+  </div>
+</div>
+
+</div>
+<!-- Quick view modal -->
+<div id="company-modal" class="company-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div id="company-modal-backdrop" class="absolute inset-0 bg-slate-900/40"></div>
+  <div class="relative card w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
+    <button id="company-modal-close" class="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div id="company-modal-body"></div>
+  </div>
+</div>
+
+<!-- Apply modal -->
+<div id="apply-modal" class="app-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div id="apply-modal-backdrop" class="absolute inset-0 bg-slate-900/40"></div>
+  <div class="relative card w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
+    <button id="apply-modal-close" class="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h3 class="font-display font-bold text-lg text-slate-800">Apply</h3>
+    <p id="apply-company" class="text-sm text-slate-500 mt-1"></p>
+    <form id="apply-form" class="space-y-4 mt-5">
+      <input id="apply-company-id" name="company_id" type="hidden">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="apply-offer">Offer</label>
+        <select id="apply-offer" name="offer_id" class="filter-select w-full"><option value="">Spontaneous application</option></select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="apply-language">Message language</label>
+        <select id="apply-language" class="filter-select w-full">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+        </select>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4">
+        <label class="flex items-center gap-2 text-sm font-semibold text-slate-700"><input id="apply-add-cover-letter" name="include_cover_letter" type="checkbox" value="1" class="w-4 h-4 rounded"> Add AI Cover Letter</label>
+        <div id="apply-cover-letter-tools" class="hidden mt-3">
+          <div class="flex flex-wrap gap-2 mb-2"><select id="apply-cover-letter-cv" class="filter-select flex-1"><option value="manual">Created CV</option><option value="uploaded">Uploaded CV</option><option value="optimized">Optimized CV</option></select><button id="generate-apply-cover-letter" type="button" class="btn btn-secondary text-xs">Generate cover letter</button></div>
+          <textarea id="apply-cover-letter" name="cover_letter" rows="8" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm" placeholder="Generate or edit your cover letter here"></textarea>
+          <div class="flex justify-between gap-2 mt-2"><p id="apply-cover-letter-status" class="text-xs text-slate-500">Tailored to the selected company and offer.</p><a id="apply-open-ai-studio" href="/postulations" class="text-xs text-purple-700 whitespace-nowrap">Prepare application →</a></div>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5" for="apply-cv">CV</label>
+        <p id="apply-current-cv" class="text-xs text-slate-500 mb-2"></p>
+        <input id="apply-cv" name="cv_file" type="file" accept=".pdf,.doc,.docx"
+               class="w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-700">
+        <p class="text-xs text-slate-400 mt-1">PDF, DOC or DOCX — 5 MB maximum.</p>
+      </div>
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <label class="block text-sm font-medium text-slate-700" for="apply-message">Message</label>
+          <button id="generate-apply-message" type="button" class="btn btn-secondary company-action text-xs">
+            <span class="action-label">Generate with AI</span><span class="action-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+        <textarea id="apply-message" name="message" rows="9" required
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition"></textarea>
+        <p id="apply-ai-status" class="text-xs text-slate-500 mt-1.5" role="status" aria-live="polite">AI uses your saved profile and current CV. Review the result before sending.</p>
+      </div>
+      <p id="apply-feedback" class="hidden rounded-lg px-3 py-2 text-sm" role="alert"></p>
+      <button id="apply-send" type="submit" class="btn btn-primary w-full justify-center">Send</button>
+    </form>
+  </div>
+</div>
+
+<div id="message-options-modal" class="app-overlay hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+  <div id="message-options-backdrop" class="absolute inset-0 bg-slate-900/50"></div>
+  <div class="relative card w-full max-w-5xl p-6 max-h-[88vh] overflow-y-auto">
+    <button id="message-options-close" class="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Close message choices">×</button>
+    <h3 class="font-display font-bold text-xl text-slate-800">Choose your AI-generated message</h3>
+    <p id="message-options-company" class="text-sm text-slate-500 mt-1"></p>
+    <div id="apply-message-options" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5" aria-label="AI message options"></div>
+  </div>
+</div>
+
+<div id="whatsapp-modal" class="app-overlay hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+  <div id="whatsapp-modal-backdrop" class="absolute inset-0 bg-slate-900/50"></div>
+  <div class="relative card w-full max-w-5xl p-6 max-h-[88vh] overflow-y-auto">
+    <button id="whatsapp-modal-close" class="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Close WhatsApp message">×</button>
+    <h3 class="font-display font-bold text-xl text-slate-800">Contact via WhatsApp</h3>
+    <p id="whatsapp-company" class="text-sm text-slate-500 mt-1"></p>
+    <div class="flex flex-col sm:flex-row gap-3 mt-5">
+      <select id="whatsapp-language" class="filter-select sm:w-52">
+        <option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option>
+      </select>
+      <button id="generate-whatsapp-message" type="button" class="btn btn-primary company-action"><span class="action-label">Generate WhatsApp messages</span><span class="action-spinner" aria-hidden="true"></span></button>
+    </div>
+    <p id="whatsapp-ai-status" class="text-xs text-slate-500 mt-2" role="status" aria-live="polite">AI will create three factual options. You choose before opening WhatsApp.</p>
+    <div id="whatsapp-message-options" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/dashboard_editorial.css',v='20261015-menu2') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/companies_directory.css',v='20261015') }}">
+<style>
+  .filter-select {
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8125rem;
+    color: #334155;
+  }
+  .filter-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    border-color: #A18F93;
+  }
+  #filter-tech-specialty.hidden{display:none!important}
+  #tech-companies-btn[aria-pressed="true"] { background:#673147; border-color:#673147; color:#fff; }
+  .companies-grid { --company-primary:#673147; --company-primary-dark:#311432; --company-purple:#673147; --company-surface:#ffffff; --company-accent:#D8C7D8; }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+  }
+  .app-overlay.hidden { display: none; }
+  .app-overlay { position: fixed; inset: 0; }
+  .company-card { overflow:hidden; background:var(--company-surface); border-color:#e8edf5; opacity:0; transform:translateY(12px); transition:transform 220ms ease,box-shadow 220ms ease,border-color 220ms ease,opacity 220ms ease; animation:company-card-enter 360ms cubic-bezier(.2,.75,.25,1) forwards; animation-delay:var(--card-delay,0ms); }
+  .company-card:hover { transform:translateY(-3px); border-color:#bfdbfe; box-shadow:0 18px 38px rgba(37,99,235,.10); }
+  .company-preview { position:relative; aspect-ratio:16/8.5; overflow:hidden; margin:-1.25rem -1.25rem 0; background:linear-gradient(145deg,#E6E6FA,#E6E6FA); border-bottom:1px solid #e8edf5; }
+  .company-preview img { width:100%; height:100%; object-fit:cover; object-position:top; transition:transform 360ms ease; }
+  .company-card:hover .company-preview img { transform:scale(1.018); }
+  .company-preview-unavailable { position:absolute; inset:0; display:grid; place-items:center; color:#64748b; font-size:.75rem; font-weight:600; }
+  .company-preview-badge { position:absolute; left:.85rem; bottom:.75rem; padding:.35rem .6rem; border-radius:999px; background:rgba(255,255,255,.92); color:var(--company-primary); font-size:.68rem; font-weight:700; box-shadow:0 5px 16px rgba(37,99,235,.12); backdrop-filter:blur(8px); }
+  .company-domain { color:#64748b; font-size:.72rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .company-rating { color:var(--company-purple); font-size:.75rem; font-weight:750; white-space:nowrap; }
+  .company-facts { display:grid; grid-template-columns:1fr 1fr; gap:.45rem .8rem; color:#64748b; font-size:.73rem; }
+  .company-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .company-tag { padding:.3rem .55rem; border:1px solid #ddd6f3; border-radius:999px; background:#E6E6FA; color:var(--company-purple); font-size:.67rem; font-weight:650; }
+  .company-tag.is-skill { border-color:#ddd6f3; background:#E6E6FA; color:#673147; }
+  .company-card > div:last-child { border-color:#e8edf5; }
+  .company-card .apply-btn { background:var(--company-primary); color:#fff; }
+  .company-card .wishlist-btn { background:var(--company-accent); color:#fff; }
+  .company-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.55rem; align-items:stretch; }
+  .company-actions .btn { width:100%; min-height:2.35rem; justify-content:center; text-align:center; padding:.45rem .6rem !important; }
+  .company-actions .website-btn { border-color:#D8C7D8; background:#E6E6FA; color:#311432; }
+  .company-actions .whatsapp-btn { border-color:#A18F93; background:#D8C7D8; color:#311432; }
+  .company-actions .offer-link { background:#673147; border-color:#673147; color:#fff; }
+  .company-actions .status-menu-wrapper { min-width:0; }
+  .company-card.status-menu-open { position: relative; z-index: 20; }
+  .company-card.status-menu-open .status-menu { z-index: 30; }
+  .company-card .btn { transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease; }
+  .company-card .btn:hover { transform: translateY(-1px); }
+  .company-action { position: relative; }
+  .company-action:disabled { cursor: wait; opacity: .72; }
+  .company-action[aria-disabled="true"] { pointer-events: none; cursor: wait; opacity: .72; }
+  .company-action.is-loading { pointer-events: none; opacity: .72; }
+  .action-spinner { display: none; width: .85rem; height: .85rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 999px; animation: company-spin .65s linear infinite; }
+  .company-action.is-loading .action-spinner { display: inline-block; }
+  .company-overlay:not(.hidden) > div:first-child, .app-overlay:not(.hidden) > div:first-child { animation: overlay-fade-in 180ms ease-out both; }
+  .company-overlay:not(.hidden) > .card, .app-overlay:not(.hidden) > .card { animation: modal-enter 220ms cubic-bezier(.2,.75,.25,1) both; }
+  @keyframes company-card-enter { to { opacity: 1; transform: translateY(0); } }
+  @keyframes company-spin { to { transform: rotate(360deg); } }
+  @keyframes overlay-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modal-enter { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .company-card, .company-card .btn, .company-overlay > *, .app-overlay > * { animation: none !important; transition: none !important; }
+    .company-card { opacity: 1; transform: none; }
+  }
+  @media (max-width:640px) { .company-actions { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:520px) { .company-facts { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static',filename='js/dashboard_layout.js',v='20261015') }}" defer></script>
+<script>
+  // Company cards and actions are backed by the current SQLite records.
+  const CATEGORY_COLORS = {
+    "IT": "#673147", "AI / Data": "#D8C7D8", "Finance": "#A18F93", "Marketing": "#673147",
+    "Engineering": "#A18F93", "Tourism": "#673147", "Education": "#D8C7D8",
+    "Healthcare": "#673147", "Logistics": "#A18F93", "Other": "#A18F93",
+  };
+
+  const STATUS_STYLES = {
+    "Discovered": "bg-slate-100 text-slate-500",
+    "Contacted": "bg-blue-50 text-blue-600",
+    "Wishlist": "bg-purple-50 text-purple-500",
+    "Applied": "bg-purple-50 text-purple-600",
+    "Replied": "bg-purple-50 text-purple-600",
+    "Interview": "bg-purple-50 text-purple-600",
+    "Offer Received": "bg-purple-50 text-purple-600",
+  };
+
+  const STATUS_ORDER = ["Discovered", "Contacted", "Wishlist", "Applied", "Replied", "Interview", "Offer Received"];
+  const MATCH_BY_COMPANY = {{ match_by_company|tojson }};
+
+  // Company rows are loaded by Flask from the local SQLite database.
+  let COMPANIES = {{ companies|tojson }}.map((company) => ({
+    ...company,
+    hasOffer: company.has_offer,
+  }));
+
+  let visibleCount = 6;
+  const PAGE_SIZE = 6;
+  let techOnly = false;
+
+  const TECH_TERMS = [
+    "tech", "it", "software", "web", "digital", "data", "ai", "intelligence artificielle",
+    "cloud", "cyber", "network", "réseau", "informatique", "developer", "développement",
+    "python", "javascript", "java", "sql", "devops"
+  ];
+
+  function companySearchText(company) {
+    return [company.name, company.website, company.category, ...(company.domains||[]), company.description, ...(Array.isArray(company.skills) ? company.skills : [])]
+      .filter(Boolean).join(" ").toLowerCase();
+  }
+
+  function isTechCompany(company) {
+    if (company.is_tech !== undefined) return company.is_tech;
+    const text = companySearchText(company);
+    return TECH_TERMS.some((term) => new RegExp(`(^|[^a-z])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`, "i").test(text));
+  }
+
+  // ---------------------------------------------------------------------
+  // Populate filter dropdowns from the data
+  // ---------------------------------------------------------------------
+  const locationSelect = document.getElementById("filter-location");
+  const domainSelect = document.getElementById("filter-domain");
+  [...new Set(COMPANIES.map((c) => c.area))].sort().forEach((area) => {
+    const opt = document.createElement("option");
+    opt.value = area;
+    opt.textContent = area;
+    locationSelect.appendChild(opt);
+  });
+  [...new Set(COMPANIES.flatMap(c=>c.domains||[c.category]))].filter(cat=>cat&&!['Génie civil','Construction / BTP'].includes(cat)).sort().forEach((cat) => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    domainSelect.appendChild(opt);
+  });
+
+  const techSpecialtySelect = document.getElementById("filter-tech-specialty");
+  const techSpecialties = [...new Set(
+    COMPANIES.filter(isTechCompany).flatMap((company) => [
+      ...(company.tech_specialties || []),
+    ]).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
+  techSpecialties.forEach((specialty) => techSpecialtySelect.append(new Option(specialty, specialty.toLowerCase())));
+
+  // ---------------------------------------------------------------------
+  // Filtering
+  // ---------------------------------------------------------------------
+  function getFiltered() {
+    const q = document.getElementById("filter-search").value.trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+    const location = document.getElementById("filter-location").value;
+    const domain = document.getElementById("filter-domain").value;
+    const offer = document.getElementById("filter-offer").value;
+    const contact = document.getElementById("filter-contact").value;
+    const source = document.getElementById("filter-source").value;
+    const techSpecialty = techSpecialtySelect.value;
+
+    return COMPANIES.filter((c) => {
+      const searchable = [c.name, c.description, c.website, c.category, ...(c.domains||[]), ...(Array.isArray(c.skills) ? c.skills : [])]
+        .filter(Boolean)
+        .join(" ")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      if (q && !searchable.includes(q)) return false;
+      if (location !== "all" && c.area !== location) return false;
+      if (domain !== "all" && !(c.domains||[c.category]).includes(domain)) return false;
+      if (offer === "yes" && !c.hasOffer) return false;
+      if (offer === "no" && c.hasOffer) return false;
+      if (contact === "email" && !c.email) return false;
+      if (contact === "phone" && !c.phone) return false;
+      if (contact === "both" && !(c.email && c.phone)) return false;
+      if (source !== "all" && !(c.sources || []).includes(source)) return false;
+      if (techOnly && !isTechCompany(c)) return false;
+      if (techOnly && techSpecialty !== "all" && !(c.tech_specialties || []).some(specialty => specialty.toLowerCase() === techSpecialty)) return false;
+      return true;
+    }).sort((a,b)=>{
+      const sort=document.getElementById('filter-sort').value;
+      const name=()=>String(a.name).localeCompare(String(b.name));
+      if(sort==='name')return name();
+      if(sort==='civil'||sort==='construction'){
+        const domain=sort==='civil'?'Génie civil':'Construction / BTP';
+        return Number((b.domains||[]).includes(domain))-Number((a.domains||[]).includes(domain))||name();
+      }
+      return Number(Boolean(b.website))-Number(Boolean(a.website))||name();
+    });
+  }
+
+  function initials(name) {
+    return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  }
+
+  function websiteDetails(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    try {
+      const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+      if (!["http:", "https:"].includes(url.protocol)) return null;
+      return {
+        url: url.href,
+        domain: url.hostname.replace(/^www\./i, ""),
+        preview: `https://image.thum.io/get/width/720/crop/420/maxAge/168/noanimate/?url=${encodeURIComponent(url.href)}`,
+      };
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function whatsappLink(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    let digits = raw.replace(/\D/g, "");
+    if (digits.startsWith("00")) digits = digits.slice(2);
+    else if (digits.startsWith("0")) digits = `212${digits.slice(1)}`;
+    else if (digits.length === 9) digits = `212${digits}`;
+    return digits.length >= 8 && digits.length <= 15 ? `https://wa.me/${digits}` : null;
+  }
+
+  // ---------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------
+  function renderCard(company, index = 0) {
+    const color = CATEGORY_COLORS[company.category] || "#A18F93";
+    const statusStyle = STATUS_STYLES[company.status] || "bg-slate-100 text-slate-500";
+    const match = MATCH_BY_COMPANY[String(company.id)];
+    const website = websiteDetails(company.website);
+    const offerLink = websiteDetails(company.offer_link?.url);
+    const whatsapp = whatsappLink(company.phone);
+    const rating = Number(company.rating);
+    const skills = Array.isArray(company.skills) ? company.skills : [];
+
+    const card = document.createElement("div");
+    card.className = "card company-card p-5 flex flex-col gap-4";
+    card.dataset.companyId = company.id;
+    card.style.setProperty("--card-delay", `${Math.min(index * 45, 225)}ms`);
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <span class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0" style="background:${color}">
+            ${initials(company.name)}
+          </span>
+          <div>
+            <h3 class="font-display font-semibold text-slate-800 leading-tight">${company.name}</h3>
+            <p class="text-xs text-slate-500 mt-0.5">${company.area} · <span style="color:${color}">${company.display_category || company.category}</span></p>
+          </div>
+        </div>
+        ${company.hasOffer ? '<span class="status-badge bg-purple-50 text-purple-600 shrink-0">Open offer</span>' : ""}
+      </div>
+
+      <p class="text-sm text-slate-600 leading-relaxed">${company.description}</p>
+
+      ${match ? `
+        <div class="flex items-center justify-between gap-3 border-l-2 border-purple-500 bg-purple-50/60 px-3 py-2">
+          <div>
+            <p class="text-xs font-semibold text-slate-700">AI Match Score</p>
+            <p class="text-xs text-slate-500">${match.offer_title}</p>
+          </div>
+          <strong class="text-lg font-semibold text-purple-700">${match.score}%</strong>
+        </div>
+      ` : ""}
+
+      <div class="flex flex-wrap gap-2 text-xs text-slate-500">
+        <span class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg>${company.website}</span>
+        <span class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>${company.email}</span>
+        ${company.phone ? `<span class="flex items-center gap-1.5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.1-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>${company.phone}</span>` : ""}
+      </div>
+
+      <div class="company-actions pt-1 border-t border-slate-100 pt-3">
+        <a class="btn btn-ghost text-xs !px-3 !py-1.5 view-btn" data-id="${company.id}" href="/companies/${company.id}">View</a>
+        ${website ? `<a class="btn btn-ghost company-action text-xs website-btn" href="${website.url}" target="_blank" rel="noopener noreferrer">Official Site</a>` : ""}
+        ${whatsapp ? `<button type="button" class="btn btn-ghost company-action text-xs whatsapp-btn" data-id="${company.id}">WhatsApp</button>` : ""}
+        ${offerLink ? `<a class="btn btn-primary company-action text-xs !px-3 !py-1.5 offer-link" href="${offerLink.url}" target="_blank" rel="noopener noreferrer">View Offer</a>` : ""}
+        <button type="button" class="btn btn-ghost company-action text-xs !px-3 !py-1.5 wishlist-btn" data-id="${company.id}"><span class="action-label">Add to wishlist</span><span class="action-spinner" aria-hidden="true"></span></button>
+        <button type="button" class="btn btn-ghost company-action text-xs !px-3 !py-1.5 apply-btn" data-id="${company.id}"><span class="action-label">Apply</span><span class="action-spinner" aria-hidden="true"></span></button>
+        <a class="btn btn-ghost company-action text-xs !px-3 !py-1.5 contact-btn" data-id="${company.id}" href="mailto:${company.email}"><span class="action-label">Contact</span><span class="action-spinner" aria-hidden="true"></span></a>
+        <div class="relative status-menu-wrapper">
+          <button type="button" class="btn btn-secondary company-action text-xs !px-3 !py-1.5 status-btn" data-id="${company.id}" aria-expanded="false"><span class="action-label">Change status</span><span class="action-spinner" aria-hidden="true"></span></button>
+          <div class="status-menu hidden absolute left-0 mt-1.5 w-40 card p-1.5 z-10">
+            ${STATUS_ORDER.map((s) => `<button type="button" class="nav-link w-full text-left status-option" data-id="${company.id}" data-status="${s}">${s}</button>`).join("")}
+          </div>
+        </div>
+      </div>
+    `;
+    const preview = document.createElement("div");
+    preview.className = "company-preview";
+    preview.innerHTML = `
+      ${website ? `<img src="${website.preview}" alt="Preview of ${company.name} official website" loading="lazy" referrerpolicy="no-referrer">` : ""}
+      <div class="company-preview-unavailable ${website ? "hidden" : ""}">${website ? "Website preview unavailable" : "No official website available"}</div>
+      ${website ? `<a class="company-preview-badge" href="${website.url}" target="_blank" rel="noopener noreferrer">Official website ↗</a>` : ""}
+    `;
+    preview.querySelector("img")?.addEventListener("error", (event) => {
+      event.currentTarget.remove();
+      preview.querySelector(".company-preview-unavailable")?.classList.remove("hidden");
+    });
+    card.prepend(preview);
+
+    const heading = preview.nextElementSibling;
+    const titleBlock = heading?.querySelector("h3")?.parentElement;
+    if (titleBlock) titleBlock.querySelector("p").textContent = website ? website.domain : "Website not listed";
+    const existingBadge = heading?.lastElementChild;
+    if (existingBadge && existingBadge.tagName === "SPAN" && existingBadge !== heading?.firstElementChild) {
+      existingBadge.className = "company-rating";
+      existingBadge.textContent = `★ ${Number.isFinite(rating) && rating > 0 ? rating.toFixed(1) : "Not rated"}`;
+    } else if (heading) {
+      heading.insertAdjacentHTML("beforeend", `<span class="company-rating">★ ${Number.isFinite(rating) && rating > 0 ? rating.toFixed(1) : "Not rated"}</span>`);
+    }
+
+    const facts = document.createElement("div");
+    facts.innerHTML = `<div class="company-facts"><p><strong>Industry:</strong> ${company.display_category || company.category || "Not specified"}</p><p><strong>Address:</strong> ${company.address || company.area || "Not listed"}</p></div><div class="company-tags mt-2"><span class="company-tag">${company.display_category || company.category || "Other"}</span>${skills.map((skill) => `<span class="company-tag is-skill">${skill}</span>`).join("")}${company.hasOffer ? '<span class="company-tag is-skill">Open offer</span>' : ""}</div>`;
+    heading?.after(facts);
+    card.querySelector(":scope > .text-xs.flex.flex-wrap")?.remove();
+
+    const actions = card.querySelector(":scope > div:last-child");
+    const favoriteLabel = actions?.querySelector(".wishlist-btn .action-label");
+    if (favoriteLabel) favoriteLabel.textContent = "Wishlist";
+    return card;
+  }
+
+  function render() {
+    const grid = document.getElementById("companies-grid");
+    const filtered = getFiltered();
+    const toShow = filtered.slice(0, visibleCount);
+
+    grid.innerHTML = "";
+    toShow.forEach((c, index) => grid.appendChild(renderCard(c, index)));
+
+    document.getElementById("no-results-state").classList.toggle("hidden", filtered.length !== 0);
+    const moreButton = document.getElementById("load-more-btn");
+    moreButton.disabled = visibleCount >= filtered.length;
+    moreButton.querySelector('.action-label').textContent = visibleCount < filtered.length
+      ? `Load more companies (${Math.min(PAGE_SIZE, filtered.length - visibleCount)} more)`
+      : filtered.length ? 'All matching companies are shown' : 'No matching companies';
+    document.getElementById('companies-page-count').textContent =
+      `${toShow.length} shown · ${filtered.length} matching · ${COMPANIES.length} companies available`;
+
+    document.getElementById("results-count").textContent =
+      filtered.length === 0 ? "" : `Showing ${toShow.length} of ${filtered.length} companies`;
+
+    attachCardHandlers();
+  }
+
+  function attachCardHandlers() {
+    document.querySelectorAll(".view-btn").forEach((btn) =>
+      btn.addEventListener("click", (event) => {
+        event.preventDefault();
+        openModal(Number(btn.dataset.id));
+      })
+    );
+    document.querySelectorAll(".wishlist-btn").forEach((btn) =>
+      btn.addEventListener("click", async () => {
+        await setStatus(Number(btn.dataset.id), "Wishlist", btn);
+      })
+    );
+    document.querySelectorAll(".apply-btn").forEach((btn) =>
+      btn.addEventListener("click", () => openApplyModal(Number(btn.dataset.id), btn))
+    );
+    document.querySelectorAll(".whatsapp-btn").forEach((btn) =>
+      btn.addEventListener("click", () => openWhatsAppModal(Number(btn.dataset.id)))
+    );
+    document.querySelectorAll(".contact-btn").forEach((btn) =>
+      btn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        const company = COMPANIES.find((c) => c.id === Number(btn.dataset.id));
+        if (!company || !company.email) {
+          window.alert("This company does not have an email address.");
+          return;
+        }
+        if (company.status === "Discovered" && !await setStatus(company.id, "Contacted", btn)) return;
+        window.location.href = `mailto:${company.email}`;
+      })
+    );
+    document.querySelectorAll(".status-btn").forEach((btn) =>
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        document.querySelectorAll(".status-menu").forEach((m) => {
+          if (m !== menu) {
+            m.classList.add("hidden");
+            m.previousElementSibling?.setAttribute("aria-expanded", "false");
+            m.closest(".company-card").classList.remove("status-menu-open");
+          }
+        });
+        menu.classList.toggle("hidden");
+        btn.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
+        btn.closest(".company-card").classList.toggle("status-menu-open", !menu.classList.contains("hidden"));
+      })
+    );
+    document.querySelectorAll(".status-option").forEach((btn) =>
+      btn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        const statusButton = btn.parentElement.previousElementSibling;
+        btn.parentElement.classList.add("hidden");
+        statusButton.setAttribute("aria-expanded", "false");
+        await setStatus(Number(btn.dataset.id), btn.dataset.status, statusButton);
+      })
+    );
+  }
+
+  function setActionLoading(button, loading) {
+    if (!button) return;
+    if ("disabled" in button) button.disabled = loading;
+    button.classList.toggle("is-loading", loading);
+    button.setAttribute("aria-busy", String(loading));
+    button.setAttribute("aria-disabled", String(loading));
+  }
+
+  async function setStatus(id, status, trigger = null) {
+    const company = COMPANIES.find((c) => c.id === id);
+    if (!company) return false;
+    setActionLoading(trigger, true);
+    try {
+      const response = await fetch(`/api/companies/${encodeURIComponent(id)}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "The company status could not be updated.");
+      company.status = data.status;
+      render();
+      return true;
+    } catch (error) {
+      window.alert(error.message);
+      render();
+      return false;
+    } finally {
+      setActionLoading(trigger, false);
+    }
+  }
+
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".status-menu").forEach((m) => m.classList.add("hidden"));
+    document.querySelectorAll(".status-btn").forEach((button) => button.setAttribute("aria-expanded", "false"));
+    document.querySelectorAll(".company-card").forEach((card) => card.classList.remove("status-menu-open"));
+  });
+
+  // ---------------------------------------------------------------------
+  // Quick view modal
+  // ---------------------------------------------------------------------
+  const modal = document.getElementById("company-modal");
+  const modalBody = document.getElementById("company-modal-body");
+
+  function openModal(id) {
+    const c = COMPANIES.find((x) => x.id === id);
+    if (!c) return;
+    const color = CATEGORY_COLORS[c.category] || "#A18F93";
+    modalBody.innerHTML = `
+      <div class="flex items-start gap-3 mb-4">
+        <span class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-base font-bold shrink-0" style="background:${color}">${initials(c.name)}</span>
+        <div>
+          <h3 class="font-display font-bold text-lg text-slate-800">${c.name}</h3>
+          <p class="text-sm text-slate-500">${c.area} · <span style="color:${color}">${c.display_category || c.category}</span></p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 leading-relaxed mb-4">${c.description}</p>
+      <div class="space-y-2 text-sm text-slate-600 mb-4">
+        <p><span class="font-medium text-slate-700">Website:</span> ${c.website}</p>
+        <p><span class="font-medium text-slate-700">Email:</span> ${c.email}</p>
+        <p><span class="font-medium text-slate-700">Phone:</span> ${c.phone || "Not available"}</p>
+        <p><span class="font-medium text-slate-700">Open offer:</span> ${c.hasOffer ? "Yes" : "No"}</p>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-slate-100">
+        <div class="flex flex-wrap gap-2">
+          <span class="status-badge ${STATUS_STYLES[c.status]}">${c.status}</span>
+          <span class="status-badge bg-slate-100 text-slate-500">${c.status === "Discovered" ? "Not contacted yet" : "Contacted"}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/companies/map" class="btn btn-ghost text-xs">View on map</a>
+          <a href="/companies/${c.id}" class="btn btn-primary text-xs">Full details</a>
+        </div>
+      </div>
+    `;
+    modal.classList.remove("hidden");
+  }
+
+  document.getElementById("company-modal-close").addEventListener("click", () => modal.classList.add("hidden"));
+  document.getElementById("company-modal-backdrop").addEventListener("click", () => modal.classList.add("hidden"));
+
+  const applyModal = document.getElementById("apply-modal");
+  const applyForm = document.getElementById("apply-form");
+  const applyFeedback = document.getElementById("apply-feedback");
+  const applySend = document.getElementById("apply-send");
+  const generateApplyMessage = document.getElementById("generate-apply-message");
+  const applyOffer = document.getElementById("apply-offer");
+  const applyCoverToggle = document.getElementById("apply-add-cover-letter");
+  const applyCoverTools = document.getElementById("apply-cover-letter-tools");
+  const applyCoverLetter = document.getElementById("apply-cover-letter");
+  const applyAiStatus = document.getElementById("apply-ai-status");
+  const applyMessageOptions = document.getElementById("apply-message-options");
+  const messageOptionsModal = document.getElementById("message-options-modal");
+  const whatsappModal = document.getElementById("whatsapp-modal");
+  const whatsappOptions = document.getElementById("whatsapp-message-options");
+  let whatsappCompanyId = null;
+
+  function showApplyFeedback(message, success = false) {
+    applyFeedback.textContent = message;
+    applyFeedback.className = success
+      ? "rounded-lg px-3 py-2 text-sm bg-purple-50 text-purple-700"
+      : "rounded-lg px-3 py-2 text-sm bg-purple-50 text-purple-700";
+  }
+
+  async function openApplyModal(companyId, trigger = null) {
+    setActionLoading(trigger, true);
+    applyModal.classList.remove("hidden");
+    applyFeedback.classList.add("hidden");
+    applySend.disabled = true;
+    generateApplyMessage.disabled = true;
+    applyAiStatus.textContent = "AI uses your saved profile and current CV. Review the result before sending.";
+    applyMessageOptions.replaceChildren();
+    messageOptionsModal.classList.add("hidden");
+    applySend.textContent = window.translateText("Loading...");
+    document.getElementById("apply-cv").value = "";
+    applyCoverToggle.checked = false;
+    applyCoverTools.classList.add("hidden");
+    applyCoverLetter.value = "";
+    try {
+      const response = await fetch(`/api/apply/context?company_id=${encodeURIComponent(companyId)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Impossible de préparer la candidature.");
+      document.getElementById("apply-company-id").value = data.company.id;
+      document.getElementById("apply-company").textContent = `${data.company.name} · ${data.company.email}`;
+      document.getElementById("apply-current-cv").textContent = data.current_cv
+        ? `${window.translateText("Current CV")}: ${data.current_cv.filename}`
+        : window.translateText("No current CV — choose a file.");
+      document.getElementById("apply-message").value = data.message || "";
+      applyOffer.replaceChildren();
+      const spontaneous = document.createElement("option"); spontaneous.value = ""; spontaneous.textContent = "Spontaneous application"; applyOffer.appendChild(spontaneous);
+      (data.offers || []).forEach(offer => { const option=document.createElement("option"); option.value=offer.id; option.textContent=offer.title; applyOffer.appendChild(option); });
+      updateApplyStudioLink();
+      const sourceSelect=document.getElementById("apply-cover-letter-cv");
+      [...sourceSelect.options].forEach(option => { option.disabled = !data.cv_sources?.[option.value]; });
+      const available=[...sourceSelect.options].find(option=>!option.disabled); if(available) sourceSelect.value=available.value;
+      applySend.disabled = false;
+      generateApplyMessage.disabled = false;
+      applySend.textContent = window.translateText("Send");
+    } catch (error) {
+      showApplyFeedback(error.message);
+      applySend.textContent = window.translateText("Send");
+    } finally {
+      setActionLoading(trigger, false);
+    }
+  }
+
+  applyCoverToggle.addEventListener("change", () => applyCoverTools.classList.toggle("hidden", !applyCoverToggle.checked));
+  document.getElementById("generate-apply-cover-letter").addEventListener("click", async (event) => {
+    const button=event.currentTarget, companyId=Number(document.getElementById("apply-company-id").value), selected=applyOffer.selectedOptions[0];
+    const status=document.getElementById("apply-cover-letter-status"); button.disabled=true; status.textContent="Generating a tailored cover letter…";
+    try {
+      const response=await fetch("/api/postulations/cover-letter",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({company_id:companyId,job_id:applyOffer.value,position:selected?.textContent||"Spontaneous application",cv:document.getElementById("apply-cover-letter-cv").value,language:document.getElementById("apply-language").value})});
+      const data=await response.json(); if(!response.ok)throw new Error(data.error||"Cover letter generation failed."); applyCoverLetter.value=data.cover_letter; status.textContent=`Ready for ${data.company_name} · ${data.position}. Review it before sending.`;
+    } catch(error) { status.textContent=error.message; } finally { button.disabled=false; }
+  });
+  applyOffer.addEventListener("change",()=>{if(applyCoverLetter.value){applyCoverLetter.value="";document.getElementById("apply-cover-letter-status").textContent="Offer changed. Generate a new adapted cover letter.";}});
+  function updateApplyStudioLink(){const companyId=document.getElementById("apply-company-id").value;document.getElementById("apply-open-ai-studio").href=`/postulations?company_id=${encodeURIComponent(companyId)}&job_id=${encodeURIComponent(applyOffer.value)}`;}
+  applyOffer.addEventListener("change",updateApplyStudioLink);
+
+  generateApplyMessage.addEventListener("click", async () => {
+    const companyId = Number(document.getElementById("apply-company-id").value);
+    if (!companyId) return;
+    setActionLoading(generateApplyMessage, true);
+    applyAiStatus.className = "text-xs text-slate-500 mt-1.5";
+    applyAiStatus.textContent = "Generating a factual application message…";
+    try {
+      const response = await fetch("/api/apply/generate-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company_id: companyId, language: document.getElementById("apply-language").value }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "AI could not generate the message.");
+      const messages = Array.isArray(data.messages) ? data.messages : [data.message];
+      const labels = ["Concise", "Professional", "Skills-focused"];
+      applyMessageOptions.replaceChildren();
+      messages.filter(Boolean).forEach((message, index) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "border border-slate-200 rounded-xl p-4 text-left bg-white hover:border-purple-300 hover:shadow-md transition flex flex-col";
+        const title = document.createElement("h4");
+        title.className = "font-semibold text-slate-800";
+        title.textContent = `${index + 1}. ${labels[index] || "Alternative"}`;
+        const preview = document.createElement("p");
+        preview.className = "text-sm text-slate-600 whitespace-pre-wrap mt-3 flex-1";
+        preview.textContent = message;
+        const choose = document.createElement("span");
+        choose.className = "btn btn-primary text-xs mt-4 justify-center";
+        choose.textContent = "Choose this message";
+        option.append(title, preview, choose);
+        option.addEventListener("click", () => {
+          document.getElementById("apply-message").value = message;
+          messageOptionsModal.classList.add("hidden");
+          applyAiStatus.textContent = `${labels[index] || "Selected"} message selected. Review and edit before sending.`;
+        });
+        applyMessageOptions.append(option);
+      });
+      document.getElementById("message-options-company").textContent = document.getElementById("apply-company").textContent;
+      messageOptionsModal.classList.remove("hidden");
+      applyAiStatus.className = "text-xs text-purple-700 mt-1.5";
+      applyAiStatus.textContent = `Generated with ${data.provider} · ${data.model}. Review and edit before sending.`;
+    } catch (error) {
+      applyAiStatus.className = "text-xs text-purple-700 mt-1.5";
+      applyAiStatus.textContent = error.message;
+    } finally {
+      setActionLoading(generateApplyMessage, false);
+    }
+  });
+
+  document.getElementById("message-options-close").addEventListener("click", () => messageOptionsModal.classList.add("hidden"));
+  document.getElementById("message-options-backdrop").addEventListener("click", () => messageOptionsModal.classList.add("hidden"));
+
+  function openWhatsAppModal(companyId) {
+    const company = COMPANIES.find((item) => item.id === companyId);
+    if (!company || !whatsappLink(company.phone)) {
+      window.alert("This company does not have a valid WhatsApp phone number.");
+      return;
+    }
+    whatsappCompanyId = companyId;
+    document.getElementById("whatsapp-company").textContent = `${company.name} · ${company.phone}`;
+    document.getElementById("whatsapp-ai-status").textContent = "AI will create three factual options. You choose before opening WhatsApp.";
+    whatsappOptions.replaceChildren();
+    whatsappModal.classList.remove("hidden");
+  }
+
+  document.getElementById("generate-whatsapp-message").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const company = COMPANIES.find((item) => item.id === whatsappCompanyId);
+    if (!company) return;
+    setActionLoading(button, true);
+    const status = document.getElementById("whatsapp-ai-status");
+    status.textContent = "Generating WhatsApp options…";
+    try {
+      const response = await fetch("/api/whatsapp/generate-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company_id: company.id, language: document.getElementById("whatsapp-language").value }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "AI could not generate WhatsApp messages.");
+      whatsappOptions.replaceChildren();
+      const labels = ["Concise", "Professional", "Skills-focused"];
+      data.messages.forEach((message, index) => {
+        const card = document.createElement("article");
+        card.className = "border border-slate-200 rounded-xl p-4 bg-white flex flex-col";
+        const title = document.createElement("h4");
+        title.className = "font-semibold text-slate-800";
+        title.textContent = `${index + 1}. ${labels[index] || "Alternative"}`;
+        const preview = document.createElement("p");
+        preview.className = "text-sm text-slate-600 whitespace-pre-wrap mt-3 flex-1";
+        preview.textContent = message;
+        const open = document.createElement("a");
+        open.className = "btn btn-primary text-xs mt-4 justify-center";
+        open.target = "_blank";
+        open.rel = "noopener noreferrer";
+        open.textContent = "Choose and open WhatsApp";
+        open.href = `${whatsappLink(company.phone)}?text=${encodeURIComponent(message)}`;
+        card.append(title, preview, open);
+        whatsappOptions.append(card);
+      });
+      status.textContent = `Generated with ${data.provider} · ${data.model}. Choose a message to continue.`;
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      setActionLoading(button, false);
+    }
+  });
+
+  document.getElementById("whatsapp-modal-close").addEventListener("click", () => whatsappModal.classList.add("hidden"));
+  document.getElementById("whatsapp-modal-backdrop").addEventListener("click", () => whatsappModal.classList.add("hidden"));
+
+  applyForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    applyFeedback.classList.add("hidden");
+    applySend.disabled = true;
+    applySend.textContent = window.translateText("Sending...");
+    try {
+      const response = await fetch("/api/apply", { method: "POST", body: new FormData(applyForm) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "La candidature n’a pas pu être envoyée.");
+      showApplyFeedback(data.message, true);
+      const companyId = Number(document.getElementById("apply-company-id").value);
+      const company = COMPANIES.find((item) => item.id === companyId);
+      if (company) company.status = "Applied";
+      render();
+      applySend.textContent = window.translateText("Application sent");
+    } catch (error) {
+      showApplyFeedback(error.message);
+      applySend.disabled = false;
+      applySend.textContent = window.translateText("Send");
+    }
+  });
+
+  document.getElementById("apply-modal-close").addEventListener("click", () => applyModal.classList.add("hidden"));
+  document.getElementById("apply-modal-backdrop").addEventListener("click", () => applyModal.classList.add("hidden"));
+
+  // ---------------------------------------------------------------------
+  // Filter + pagination events
+  // ---------------------------------------------------------------------
+  ["filter-search", "filter-location", "filter-domain", "filter-offer", "filter-contact", "filter-source", "filter-sort"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", () => { visibleCount = PAGE_SIZE; render(); });
+    document.getElementById(id).addEventListener("change", () => { visibleCount = PAGE_SIZE; render(); });
+  });
+  let searchHistoryTimer;
+  document.getElementById("filter-search").addEventListener("input", (event) => {
+    clearTimeout(searchHistoryTimer);
+    const query = event.currentTarget.value.trim();
+    if (query.length < 2) return;
+    searchHistoryTimer = setTimeout(() => fetch("/api/company-search-history", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    }).catch(() => {}), 700);
+  });
+
+  document.getElementById("tech-companies-btn").addEventListener("click", (event) => {
+    techOnly = !techOnly;
+    event.currentTarget.setAttribute("aria-pressed", String(techOnly));
+    techSpecialtySelect.classList.toggle("hidden", !techOnly);
+    document.getElementById("clear-tech-filter").classList.toggle("hidden", !techOnly);
+    if (!techOnly) techSpecialtySelect.value = "all";
+    visibleCount = PAGE_SIZE;
+    render();
+  });
+  techSpecialtySelect.addEventListener("change", () => { visibleCount = PAGE_SIZE; render(); });
+  document.getElementById("clear-tech-filter").addEventListener("click", () => {
+    techOnly = false;
+    techSpecialtySelect.value = "all";
+    techSpecialtySelect.classList.add("hidden");
+    document.getElementById("clear-tech-filter").classList.add("hidden");
+    document.getElementById("tech-companies-btn").setAttribute("aria-pressed", "false");
+    visibleCount = PAGE_SIZE;
+    render();
+  });
+
+  document.querySelectorAll('.reset-company-filters').forEach(button => button.addEventListener('click', () => {
+    clearTimeout(searchHistoryTimer);
+    document.getElementById('filter-search').value = '';
+    ['filter-location','filter-domain','filter-offer','filter-contact','filter-source'].forEach(id => document.getElementById(id).value = 'all');
+    document.getElementById('filter-sort').value='website';
+    techOnly = false;
+    techSpecialtySelect.value = 'all';
+    techSpecialtySelect.classList.add('hidden');
+    document.getElementById('clear-tech-filter').classList.add('hidden');
+    document.getElementById('tech-companies-btn').setAttribute('aria-pressed','false');
+    visibleCount = PAGE_SIZE;
+    render();
+    document.getElementById('companies-grid').scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+
+  document.getElementById("load-more-btn").addEventListener("click", (event) => {
+    const button = event.currentTarget;
+    setActionLoading(button, true);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      visibleCount += PAGE_SIZE;
+      setActionLoading(button, false);
+      render();
+    }));
+  });
+
+  render();
+</script>
+{% endblock %}

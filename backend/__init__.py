@@ -1,0 +1,1 @@
+"""TALENTSOUK backend package."""

@@ -1,0 +1,61 @@
+/* One native select design across TalentSouk. Native values, events and forms stay intact. */
+select:not([multiple]):where(:not([size]),[size="1"]){
+ border:1px solid #e5dfe5!important;border-radius:16px!important;
+ background-color:#fff!important;color:#231815;min-height:40px;
+ padding-block:10px!important;padding-inline:15px!important;
+ font-family:inherit;font-size:inherit;line-height:1.45;
+ box-shadow:0 2px 3px #2318150b;cursor:pointer;
+ transition:border-color .15s,box-shadow .15s;
+}
+select:not([multiple]):where(:not([size]),[size="1"]):hover:not(:disabled){border-color:#bda4b9!important}
+select:not([multiple]):where(:not([size]),[size="1"]):focus-visible{
+ outline:2px solid #bda4b9!important;outline-offset:2px;border-color:#4A2E27!important;
+}
+select:disabled{cursor:not-allowed!important;opacity:.55}
+@supports (appearance:base-select){
+ select:not([multiple]):where(:not([size]),[size="1"]),
+ select:not([multiple]):where(:not([size]),[size="1"])::picker(select){appearance:base-select!important}
+ select:not([multiple]):where(:not([size]),[size="1"]){
+  background-image:none!important;display:inline-flex;align-items:center;gap:16px;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"])::picker-icon{
+  content:"";width:8px;height:8px;border-inline-end:1.6px solid #4A2E27;
+  border-block-end:1.6px solid #4A2E27;transform:rotate(45deg);
+  margin-inline-start:auto;margin-inline-end:3px;flex-shrink:0;align-self:center;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"]):open{
+  border-color:#4A2E27!important;box-shadow:0 2px 5px #23181515;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"]):open::picker-icon{transform:rotate(225deg)}
+ select:not([multiple]):where(:not([size]),[size="1"])::picker(select){
+  background:white;color:#231815;border:1px solid #e9e2e7;
+  border-radius:20px;padding:8px;margin-block:8px;
+  box-shadow:0 12px 38px #23181524;max-height:min(390px,65dvh);
+  overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+  scrollbar-color:#c9b5ca transparent;box-sizing:border-box;
+  font-family:inherit;font-size:14px;line-height:1.5;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"]) option{
+  display:flex;align-items:center;gap:12px;justify-content:space-between;
+  min-height:44px;padding:12px 15px;margin:2px 0;
+  border-radius:13px;background:white;color:#231815;
+  white-space:normal;overflow-wrap:anywhere;cursor:pointer;font-weight:400;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"]) option:hover,
+ select:not([multiple]):where(:not([size]),[size="1"]) option:focus-visible{
+  background:#F5EFC6;outline:none;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"]) option:checked{
+  background:#E6E6FA;color:#311432;font-weight:650;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"]) option::checkmark{
+  display:none;content:none;
+ }
+ select:not([multiple]):where(:not([size]),[size="1"]) option:disabled{opacity:.45;cursor:not-allowed}
+ select:not([multiple]):where(:not([size]),[size="1"]) option[hidden]{display:none!important}
+ select:not([multiple]):where(:not([size]),[size="1"]) optgroup{padding:4px}
+ select:not([multiple]):where(:not([size]),[size="1"]) optgroup>legend{
+  padding:10px 14px 5px;color:#927c91;font-size:11px;font-weight:650;
+ }
+}
+@media(prefers-reduced-motion:reduce){select{transition:none!important}}

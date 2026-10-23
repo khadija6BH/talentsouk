@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}AI Career Studio — TalentSouk{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/ai_studio.css',v='20261023-v4') }}">{% endblock %}
+{% block content %}
+<header class="ai-hero"><div><span class="ai-kicker">✧ TALENTSOUK INTELLIGENCE</span><h1>Your next application starts here.</h1><p>Match your profile, improve your CV and prepare your application — one step at a time.</p></div><div class="ai-orbit" aria-hidden="true"><span>AI</span></div></header>
+<nav class="ai-tabs" aria-label="AI Studio tools">{% for key,label in [('match','Job Match'),('optimize','CV Optimizer'),('skills','Skills Gap'),('recommendations','For your CV'),('cover','Cover Letter')] %}<a href="{{ url_for('ai_studio',tab=key,company_id=request.args.get('company_id',''),offer_id=request.args.get('offer_id',''),cv_source=request.args.get('cv_source','dna')) }}" {% if studio_tab==key %}class="is-active" aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}</nav>
+{% block studio_content %}{% endblock %}
+{% endblock %}

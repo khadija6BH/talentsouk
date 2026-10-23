@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="{{ ui_language }}" dir="{{ 'rtl' if ui_language=='ar' else 'ltr' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TalentSouk{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='images/talentsouk-favicon.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth-design.css', v='20261018-marrakech') }}">
+</head>
+<body class="souk-account-page">
+  <a class="souk-skip" href="#account-form">Skip to form</a>
+  <header class="souk-header">
+    <a class="souk-wordmark" href="{{ url_for('welcome') }}" aria-label="TalentSouk home">
+      <img src="{{ url_for('static', filename='images/talentsouk-logo.png') }}" alt="" width="52" height="64">
+      <span><strong>TalentSouk</strong><small>YOUR CAREER, OUR MISSION</small></span>
+    </a>
+    <nav class="souk-nav" aria-label="Main navigation">
+      <a href="{{ url_for('welcome') }}">Home</a>
+      <a href="{{ url_for('companies') }}">Companies</a>
+      <a href="{{ url_for('opportunity_radar') }}">Job Offers</a>
+      <a href="{{ url_for('welcome') }}#tools">About</a>
+    </nav>
+    <div class="souk-header-actions">
+      <label class="souk-language"><span aria-hidden="true">◎</span><select id="language-selector" aria-label="Language">
+        <option value="en" {{ 'selected' if ui_language=='en' }}>English</option>
+        <option value="fr" {{ 'selected' if ui_language=='fr' }}>Français</option>
+        <option value="ar" {{ 'selected' if ui_language=='ar' }}>العربية</option>
+      </select></label>
+      <a class="souk-nav-login" href="{{ url_for('login') }}" {{ 'aria-current=page' if request.endpoint=='login' }}>Log in</a>
+      <a class="souk-nav-signup" href="{{ url_for('register') }}" {{ 'aria-current=page' if request.endpoint=='register' }}>Sign up <span aria-hidden="true">→</span></a>
+    </div>
+  </header>
+  <main class="souk-account-layout">
+    <section class="souk-intro" aria-labelledby="souk-intro-title">
+      <span class="souk-eyebrow"><span aria-hidden="true">✣</span> YOUR CAREER SPACE</span>
+      <h2 id="souk-intro-title">Build your<br>future in <em>Marrakech</em></h2>
+      <p class="souk-intro-description">Find the right opportunities, connect with top companies,<br class="souk-desktop-break"> and take the next step in your career.</p>
+      <div class="souk-benefits">
+        <div><span class="souk-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V4h8v3M3 12h18M10 12v3h4v-3"/></svg></span><h3>Top Companies</h3><p>Trusted employers<br>in Marrakech</p></div>
+        <div><span class="souk-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg></span><h3>Smart Matching</h3><p>AI-powered<br>recommendations</p></div>
+        <div><span class="souk-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="14" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg></span><h3>Career Tools</h3><p>CV builder, skill gap<br>&amp; more</p></div>
+      </div>
+    </section>
+    <section class="souk-account-panel" aria-label="Account">
+      <div class="souk-form-card" id="account-form">
+        <svg class="souk-card-shape" viewBox="0 0 500 800" preserveAspectRatio="none" aria-hidden="true"><path d="M250 2 C232 40 213 47 148 70 C42 108 2 151 2 221 L2 750 Q2 798 50 798 L450 798 Q498 798 498 750 L498 221 C498 151 458 108 352 70 C287 47 268 40 250 2 Z"/></svg>
+        <div class="souk-card-content">
+          <img class="souk-form-logo" src="{{ url_for('static', filename='images/talentsouk-logo.png') }}" alt="TalentSouk" width="48" height="58">
+          {% block account_content %}{% endblock %}
+        </div>
+      </div>
+    </section>
+  </main>
+  {% include 'components/language_scripts.html' %}
+  <script src="{{ url_for('static', filename='js/app.js', v='20261018-auth') }}"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/crm_workspace.css',v='20261021-v2') }}">
+<nav class="crm-workspace-tabs" aria-label="CRM sections">
+{% for endpoint,label,view in [('crm','Contacts & Follow-ups','tracker'),('performance_lab','Performance Lab','performance')] %}<a href="{{ url_for(endpoint) }}" class="{{ 'is-active' if crm_view|default('tracker')==view }}" {% if crm_view|default('tracker')==view %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+</nav>

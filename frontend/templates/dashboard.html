@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — TalentSouk{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/dashboard_editorial.css',v='20261016-banner') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_journey.css', v='20261021') }}">
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/welcome.css',v='20261014-welcome') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/dashboard_charts.css',v='20261016-flat-charts') }}">
+<div class="dashboard-shell">
+<section class="journey-home" aria-labelledby="journey-title">
+ <header class="journey-hero"><div class="journey-hero-copy"><p class="journey-kicker">WELCOME BACK{% if current_user %}, <span translate="no">{{ current_user.full_name }}</span>{% endif %}</p><h1 id="journey-title">Your career journey<br>starts <em>here</em></h1><p>Find opportunities. Plan your next move.</p><nav class="journey-buttons" aria-label="Career shortcuts"><a class="journey-button primary" href="{{ url_for('opportunity_radar') }}">Browse job offers <span aria-hidden="true">→</span></a><a class="journey-button" href="{{ url_for('companies') }}">Explore companies</a><a class="journey-button" href="{{ url_for('career_copilot') }}">Try AI Career Tools</a></nav></div></header>
+ <div class="journey-body"><div class="journey-main">
+  <div class="journey-stats">{% for icon,value,label,note in [('▣',company_dashboard.offers,'Job offers','Currently available'),('▦',company_dashboard.total,'Companies','Companies to explore'),('▤',user_dashboard.applications,'Applications','Your saved applications'),('♧',dashboard_home.crm_count,'CRM contacts','Your tracked records')] %}<article><span class="journey-stat-icon" aria-hidden="true">{{ icon }}</span><div><strong>{{ value }}</strong><h2>{{ label }}</h2><small>{{ note }}</small></div></article>{% endfor %}</div>
+  <div class="journey-focus"><article class="journey-profile"><span class="journey-profile-art" aria-hidden="true">▤</span><div><span class="journey-badge">{{ 'PROFILE READY' if dashboard_home.profile_completion == 100 else 'IN PROGRESS' }}</span><h2>{{ 'Your profile is ready' if dashboard_home.profile_completion == 100 else 'Complete your profile' }}</h2><p>Keep your experience and skills up to date for more relevant opportunities.</p><div class="journey-progress-row"><progress value="{{ dashboard_home.profile_completion }}" max="100" aria-label="CV profile completion">{{ dashboard_home.profile_completion }}%</progress><strong>{{ dashboard_home.profile_completion }}%</strong></div><a class="journey-button primary" href="{{ url_for('cv_builder') }}">{{ 'Review profile' if dashboard_home.profile_completion == 100 else 'Continue profile' }} <span aria-hidden="true">→</span></a></div></article>
+  <article class="journey-next"><span class="journey-kicker">✧ YOUR NEXT STEP</span>{% if reminders %}<h2>{{ reminders[0].title or 'Review your reminder' }}</h2><p>{{ reminders[0].company_name }}</p><a class="journey-button primary" href="{{ url_for('crm') }}">Open CRM →</a>{% else %}<h2>Practice one interview answer</h2><p>Work on a clear answer and review feedback before your next interview.</p><a class="journey-button primary" href="{{ url_for('interview_helper') }}">Open tool →</a>{% endif %}<a class="journey-text-link" href="{{ url_for('career_copilot') }}">Explore your career tools →</a></article></div>
+  <section class="journey-latest" aria-labelledby="journey-latest-title"><header><h2 id="journey-latest-title">✧ Latest job offers</h2><a href="{{ url_for('opportunity_radar') }}">View all →</a></header><div class="journey-offer-grid">{% for offer in dashboard_home.latest_offers %}<a class="journey-offer" href="{{ url_for('opportunity_detail',offer_id=offer.id) }}"><span class="journey-offer-icon" aria-hidden="true">▣</span><div><h3>{{ offer.title }}</h3><p>{{ offer.company_name or 'View opportunity' }}</p><small>{{ offer.location or 'Marrakech' }}</small></div></a>{% else %}<p>No current offers available. Check back soon.</p>{% endfor %}</div></section>
+ </div><aside class="journey-goals"><h2>◎ Your career goals</h2><p>Turn your ambitions into a plan with smart tools and personalized recommendations.</p><a class="journey-goal" href="{{ url_for('profile') }}"><span><strong>{{ dashboard_home.target_position }}</strong><small>{{ dashboard_home.target_location }}</small></span><span aria-hidden="true">›</span></a><h3>✧ Suggested next steps</h3><nav aria-label="Suggested next steps">{% for endpoint,label in [('cv_builder','Complete your profile'),('opportunity_radar','Explore matching offers'),('cv_builder','Build your CV'),('applications','Check your applications')] %}<a href="{{ url_for(endpoint) }}"><span>{{ label }}</span><span aria-hidden="true">›</span></a>{% endfor %}</nav></aside></div>
+</section>
+
+  <section class="mb-8" aria-labelledby="company-dashboard-title">
+    <div class="dashboard-section-heading mb-4">
+      <div>
+        <p class="dashboard-eyebrow mb-1">COMPANY INSIGHTS</p>
+        <h3 id="company-dashboard-title" class="dashboard-animated-title">Companies Dashboard</h3>
+        <p class="text-sm text-slate-500 mt-1">Explore the companies and job offers available in TalentSouk.</p>
+      </div>
+    </div>
+
+    <div class="dashboard-map-row mb-5">
+      <article class="card dashboard-map-card p-5">
+        <div class="dashboard-visual-heading"><div><h4 class="font-display font-semibold text-slate-800">Company map</h4><p>Explore companies by location</p></div><a href="{{ url_for('companies_map') }}">Full map</a></div>
+        <div id="dashboard-companies-map" aria-label="Map of companies"></div>
+        <p id="dashboard-map-fallback" class="hidden text-sm text-slate-500 mt-3">The interactive map is unavailable. Open the full map or try again later.</p>
+      </article>
+
+      <article class="card dashboard-sector-card p-5" aria-labelledby="company-sector-title">
+        <div class="dashboard-visual-heading"><div><h4 id="company-sector-title" class="font-display font-semibold text-slate-800">Company categories</h4><p>Companies by industry</p></div><span>Company records</span></div>
+        <div class="dashboard-chart" data-dashboard-chart="categories" aria-label="Company category distribution">
+          {% for item in company_dashboard.category_chart %}<p>{{ item.name }}: {{ item.count }}</p>{% else %}<p>No category data available.</p>{% endfor %}
+        </div>
+      </article>
+    </div>
+
+    <div class="dashboard-company-visuals dashboard-secondary-visuals mb-5">
+      <article class="card dashboard-visual-card p-5">
+        <div class="dashboard-visual-heading"><div><h4 class="font-display font-semibold text-slate-800">Companies by category</h4><p>Distribution from saved company records</p></div><span>Companies by category</span></div>
+        <div class="dashboard-chart" data-dashboard-chart="category-bars" aria-label="Companies by category bar chart">{% for category,count in company_dashboard.categories %}<p>{{ category }}: {{ count }}</p>{% endfor %}</div>
+      </article>
+      <article class="card dashboard-visual-card p-5">
+        <div class="dashboard-visual-heading"><div><h4 class="font-display font-semibold text-slate-800">Company contact coverage</h4><p>Email availability in the company database</p></div><span>Live records</span></div>
+        <div class="dashboard-chart" data-dashboard-chart="contacts" aria-label="Company contact coverage"><p>{{ company_dashboard.with_email }} with email · {{ company_dashboard.total-company_dashboard.with_email }} without email</p></div>
+      </article>
+    </div>
+    
+
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static',filename='js/home_slideshow.js',v='20261016-banner') }}" defer></script>
+<script src="{{ url_for('static',filename='js/dashboard_layout.js',v='20261016-banner') }}" defer></script>
+<script id="dashboard-chart-data" type="application/json">{{ {'company':{'total':company_dashboard.total,'with_email':company_dashboard.with_email,'categories':company_dashboard.categories,'category_chart':company_dashboard.category_chart},'activity':user_activity}|tojson }}</script>
+<script src="{{ url_for('static',filename='js/dashboard_charts.js',v='20261016-flat-charts') }}" defer></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  const companyCategories = {{ company_dashboard.categories|tojson }};
+  const companyMapData = {{ company_dashboard.map_companies|tojson }};
+  const companyTotals = {
+    total: {{ company_dashboard.total }},
+    withEmail: {{ company_dashboard.with_email }},
+    withOffers: {{ company_dashboard.with_offers }},
+  };
+  const mauvePalette = ["#311432", "#673147", "#A18F93", "#D8C7D8", "#E6E6FA", "#311432", "#673147", "#A18F93", "#D8C7D8", "#E6E6FA"];
+
+  if (typeof L === "undefined") {
+    document.getElementById("dashboard-companies-map").classList.add("hidden");
+    document.getElementById("dashboard-map-fallback").classList.remove("hidden");
+  } else {
+    const companyMap = L.map("dashboard-companies-map", { scrollWheelZoom: false }).setView([31.635, -8.005], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap contributors", maxZoom: 18 }).addTo(companyMap);
+    const markers = companyMapData.map((company) => {
+      const colorIndex = [...company.category].reduce((sum, character) => sum + character.charCodeAt(0), 0) % mauvePalette.length;
+      const marker = L.circleMarker([company.lat, company.lng], { radius: 7, color: "#FFFFFF", weight: 2, fillColor: mauvePalette[colorIndex], fillOpacity: .92 }).addTo(companyMap);
+      const popup = document.createElement("div");
+      const name = document.createElement("strong");
+      const details = document.createElement("p");
+      const link = document.createElement("a");
+      name.textContent = company.name;
+      details.textContent = `${company.category} · ${company.area}`;
+      link.href = `/companies/${company.id}`;
+      link.textContent = "View company";
+      popup.append(name, details, link);
+      marker.bindPopup(popup);
+      return marker;
+    });
+    if (markers.length) companyMap.fitBounds(L.featureGroup(markers).getBounds().pad(.08), { maxZoom: 13 });
+  }
+
+  document.querySelectorAll(".reminder-action").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const response = await fetch(`/api/reminders/${button.dataset.reminder}`, { method: button.dataset.method });
+      if (response.ok) button.closest(".dashboard-list-row")?.remove();
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Settings — TalentSouk{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/account_workspace.css',v='20261023-account-redesign') }}">
+<style>
+  .settings-shell{width:min(100%,58rem)}
+  .settings-card{padding:1.35rem 1.55rem;border:1px solid #e7dde7;border-radius:1rem;background:#fff;box-shadow:0 3px 12px rgba(49,20,50,.06)}
+  .settings-card h2{margin:0;color:#311432;font-size:.95rem;font-weight:750}
+  .settings-row{display:flex;align-items:center;justify-content:space-between;gap:1.25rem;padding:1rem 0;border-bottom:1px solid #f0e9f0}.settings-row:last-child{border-bottom:0;padding-bottom:0}
+  .settings-label{color:#1e293b;font-size:.88rem;font-weight:650}.settings-help{margin-top:.15rem;color:#64748b;font-size:.74rem;line-height:1.45}
+  .settings-control{min-width:9rem;border:1px solid #D8C7D8;border-radius:.75rem;background:#fff;padding:.58rem .75rem;color:#311432;font-size:.8rem}
+  .settings-switch{position:relative;width:2.8rem;height:1.55rem;flex:0 0 auto}.settings-switch input{position:absolute;opacity:0}.settings-switch span{position:absolute;inset:0;border-radius:999px;background:#D8C7D8;cursor:pointer;transition:.2s}.settings-switch span::after{content:"";position:absolute;top:.2rem;left:.22rem;width:1.15rem;height:1.15rem;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}.settings-switch input:checked+span{background:#673147}.settings-switch input:checked+span::after{transform:translateX(1.2rem)}
+  .settings-badge{padding:.3rem .6rem;border-radius:999px;background:#E6E6FA;color:#673147;font-size:.68rem;font-weight:700}
+  .settings-gmail-box{margin-top:1rem;padding:1rem;border:1px solid #eadfea;border-radius:.9rem;background:#fbf8fb}
+  .danger-zone{border-color:#e8cdd8}.danger-zone h2{color:#673147}
+  @media(max-width:640px){.settings-row{align-items:flex-start;flex-direction:column}.settings-control{width:100%}.settings-card{padding:1.05rem}.settings-switch{align-self:flex-end;margin-top:-2.4rem}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-shell account-workspace">
+  <header class="account-workspace-header"><div><span class="account-tag">PREFERENCES</span><h1>Settings</h1><p>Control how TalentSouk works for you.</p></div></header>
+  <div class="settings-workspace-grid"><nav class="settings-side-nav" aria-label="Settings sections">
+  {% set icons={'appearance':'M12 3l3 6 6 3-6 3-3 6-3-6-6-3 6-3z','general':'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 2v3 M12 19v3 M2 12h3 M19 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2','notifications':'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9 M10 21h4','privacy':'M5 10h14v11H5z M8 10V6a4 4 0 0 1 8 0v4','language':'M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0 M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6','ai':'M12 3l3 6 6 3-6 3-3 6-3-6-6-3 6-3z','connections':'M9 15l6-6 M7 10l-3 3a5 5 0 0 0 7 7l3-3 M10 7l3-3a5 5 0 0 1 7 7l-3 3'} %}
+  {% for key,label in [('general','General'),('appearance','Appearance'),('notifications','Notifications'),('privacy','Privacy & security'),('language','Language & region'),('ai','AI preferences'),('connections','Connections')] %}<a href="#settings-{{ key }}" data-settings-target="{{ key }}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="{{ icons[key] }}"/></svg>{{ label }}</a>{% endfor %}</nav>
+  <div class="space-y-4">
+    <section data-settings-panel="appearance" class="settings-card">{% set appearance_destination='settings' %}{% include 'components/appearance_picker.html' %}</section>
+    <section data-settings-panel="general" class="settings-card">
+      <p class="account-eyebrow">YOUR WORKSPACE</p><h2>General preferences</h2><p class="settings-help">Your account and career workspace, in one place.</p>
+      <div class="settings-row"><div><p class="settings-label">Email</p><p class="settings-help">{{ current_user.email }}</p></div>{% if current_user.verified_email == current_user.email %}<span class="settings-badge">Email verified</span>{% else %}<form method="post" action="{{ url_for('verify_current_email') }}"><button class="btn btn-primary" type="submit">Verify email for notifications</button></form>{% endif %}</div>
+      <div class="settings-row"><div><p class="settings-label">Your TalentSouk guide</p><p class="settings-help">Follow a short, step-by-step tour of your career workspace. Start, resume or replay it anytime.</p></div><a class="btn btn-secondary" href="{{ url_for('tutorial_intro') }}">Open tutorial</a></div>
+      <div class="settings-row"><div><p class="settings-label">Full name</p><p class="settings-help">{{ current_user.full_name }}</p></div><a class="btn btn-ghost text-xs" href="{{ url_for('profile') }}">Open profile</a></div>
+      <div class="settings-row"><div><p class="settings-label">CV and career profile</p><p class="settings-help">Manage your ATS CV, photo, templates and career preferences.</p></div><a class="btn btn-secondary text-xs" href="{{ url_for('cv_builder') }}">Manage CV</a></div>
+    </section>
+
+    <section data-settings-panel="language" class="settings-card">
+      <p class="account-eyebrow">MAKE IT YOURS</p><h2>Language & region</h2>
+      <form method="post" action="{{ url_for('settings') }}">
+        <div class="settings-row"><div><p class="settings-label">Interface language</p><p class="settings-help">Choose Arabic, French or English.</p></div><select id="settings-language" aria-label="Interface language" name="language" class="settings-control"><option value="ar" {{ 'selected' if current_user.preferred_language=='ar' }}>Arabic</option><option value="fr" {{ 'selected' if current_user.preferred_language=='fr' }}>French</option><option value="en" {{ 'selected' if current_user.preferred_language=='en' }}>English</option></select></div>
+        <div class="flex justify-end pt-4"><button class="btn btn-primary text-xs" type="submit">Save language</button></div>
+      </form>
+    </section>
+
+    <form method="post" action="{{ url_for('settings_preferences') }}" class="space-y-4">
+      <section class="settings-card" data-settings-panel="general"><h2>Personalized assistance</h2>        <div class="settings-row"><div><p class="settings-label">AI suggestions</p><p class="settings-help">Show career, matching and CV improvement suggestions.</p></div><label class="settings-switch"><input type="checkbox" aria-label="AI suggestions" name="ai_suggestions" {{ 'checked' if preferences.ai_suggestions }}><span></span></label></div></section>
+      <section data-settings-panel="notifications" class="settings-card">
+        <h2 id="notifications">Notifications</h2>
+        <div class="settings-row"><div><p class="settings-label">Email notifications</p><p class="settings-help">Receive TalentSouk notifications by email, with the app logo and a link to the source page. Your email must be verified.</p></div><label class="settings-switch"><input type="checkbox" aria-label="Email notifications" name="email_notifications" {{ 'checked' if preferences.email_notifications }}><span></span></label></div>
+
+        <div class="settings-row"><div><p class="settings-label">Notification frequency</p><p class="settings-help">Instant: within the next background check. Daily / weekly: grouped updates after the first delivery.</p></div><select aria-label="Notification frequency" name="notification_frequency" class="settings-control"><option value="instant" {{ 'selected' if preferences.notification_frequency=='instant' }}>Instant</option><option value="daily" {{ 'selected' if preferences.notification_frequency=='daily' }}>Daily summary</option><option value="weekly" {{ 'selected' if preferences.notification_frequency=='weekly' }}>Weekly summary</option><option value="off" {{ 'selected' if preferences.notification_frequency=='off' }}>Never</option></select></div>
+      </section>
+
+      <section data-settings-panel="ai" class="settings-card">
+        <div class="flex items-center justify-between gap-3"><h2>AI settings</h2><span class="settings-badge">{{ 'API configured' if ai_status.configured else 'Local fallback active' }}</span></div>
+        <div class="settings-row"><div><p class="settings-label">Preferred AI provider</p><p class="settings-help">Choose Gemini, xAI Grok, Groq Cloud, or NVIDIA NIM. Provider usage limits depend on your API account.</p></div><select id="ai-provider" aria-label="Preferred AI provider" name="ai_provider" class="settings-control"><option value="gemini" {{ 'selected' if preferences.ai_provider=='gemini' }}>Google Gemini</option><option value="grok" {{ 'selected' if preferences.ai_provider=='grok' }}>xAI Grok</option><option value="groq" {{ 'selected' if preferences.ai_provider=='groq' }}>Groq Cloud</option><option value="nvidia" {{ 'selected' if preferences.ai_provider=='nvidia' }}>NVIDIA NIM</option><option value="none" {{ 'selected' if preferences.ai_provider=='none' }}>Local tools only</option></select></div>
+        <div class="settings-row"><div><p class="settings-label">AI model</p><p class="settings-help">Choose the speed and quality level used for generated cover letters. The selection is saved only for your account.</p></div><select id="ai-model" aria-label="AI model" name="ai_model" class="settings-control" data-selected="{{ preferences.ai_model|default('') }}"></select></div>
+        <div class="settings-row"><div><p class="settings-label">Connection status</p><p class="settings-help">API keys stay on the server and are never sent to the browser.</p></div><div class="text-right text-xs text-slate-500"><div>Gemini: {{ 'ready' if ai_status.providers.gemini.configured else 'key required' }}</div><div>Grok: {{ 'ready' if ai_status.providers.grok.configured else 'key required' }}</div><div>Groq: {{ 'ready' if ai_status.providers.groq.configured else 'key required' }}</div><div>NVIDIA: {{ 'ready' if ai_status.providers.nvidia.configured else 'key required' }}</div></div></div>
+        <div class="settings-gmail-box"><p class="settings-label">AI feature routing</p><div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 text-xs text-slate-600"><div class="rounded-xl bg-white border border-slate-100 p-3"><strong class="block text-[#673147]">NVIDIA · Kimi</strong>Interview questions, STAR feedback and answer scoring</div><div class="rounded-xl bg-white border border-slate-100 p-3"><strong class="block text-[#673147]">xAI Grok</strong>AI matching and CV optimization analysis</div><div class="rounded-xl bg-white border border-slate-100 p-3"><strong class="block text-[#673147]">Google Gemini</strong>CV summaries, application messages, WhatsApp and cover letters</div></div></div>
+      </section>
+
+      <section data-settings-panel="privacy" class="settings-card">
+        <h2>Privacy</h2>
+        <div class="settings-row"><div><p class="settings-label">Profile visibility</p><p class="settings-help">Private keeps your profile visible only to you. Recruiter-ready prepares it for future sharing features.</p></div><select aria-label="Profile visibility" name="profile_visibility" class="settings-control"><option value="private" {{ 'selected' if preferences.profile_visibility=='private' }}>Private</option><option value="recruiters" {{ 'selected' if preferences.profile_visibility=='recruiters' }}>Recruiter-ready</option></select></div>
+        <div class="settings-row"><div><p class="settings-label">Anonymous usage analytics</p><p class="settings-help">Allow anonymous product-improvement metrics. Disabled by default.</p></div><label class="settings-switch"><input type="checkbox" aria-label="Anonymous usage analytics" name="analytics_enabled" {{ 'checked' if preferences.analytics_enabled }}><span></span></label></div>
+        
+      </section>
+      <div class="settings-preferences-actions" data-settings-save><button class="btn btn-ghost" type="reset">Cancel</button><button class="btn btn-primary" type="submit">Save changes</button></div>
+    </form>
+
+    <section data-settings-panel="connections" class="settings-card">
+      <div class="flex items-center justify-between gap-3"><h2>Email and Gmail</h2>{% if gmail_connection %}<span class="settings-badge">{{ 'Verified' if gmail_connection.email_verified else 'Reconnect required' }}</span>{% endif %}</div>
+      <div class="settings-row"><div><p class="settings-label">TalentSouk account email</p><p class="settings-help">{{ current_user.email }}</p></div></div>
+      <div class="settings-gmail-box">
+        {% if gmail_connection and gmail_connection.email_verified %}<p class="settings-label">Connected Gmail: {{ gmail_connection.account_email }}</p><p class="settings-help">Google verified this address. The OAuth token is encrypted and your Gmail password is never stored.</p>
+        {% elif gmail_configured %}<p class="settings-label">Connect Gmail to send applications</p><p class="settings-help">Choose and verify the Google account that will send your reviewed applications.</p>
+        {% else %}<p class="settings-label">Gmail OAuth is not configured</p><p class="settings-help">Add the three Google OAuth environment variables to activate this connection.</p>{% endif %}
+        <div class="flex flex-wrap gap-2 mt-4">{% if gmail_configured %}<a class="btn btn-primary text-xs" href="{{ url_for('gmail_connect', next='settings') }}">{{ 'Reconnect Gmail' if gmail_connection else 'Connect Gmail' }}</a>{% endif %}{% if gmail_connection %}<form method="post" action="{{ url_for('gmail_disconnect') }}"><input type="hidden" name="next" value="settings"><button class="btn btn-ghost text-xs" type="submit">Disconnect</button></form>{% endif %}</div>
+      </div>
+    </section>
+
+    <section data-settings-panel="privacy" class="settings-card">
+      <h2>Security</h2>
+      <details class="mt-3"><summary class="cursor-pointer settings-label py-2">Change password</summary><form method="post" action="{{ url_for('settings_change_password') }}" class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3"><input class="settings-control" type="password" name="current_password" placeholder="Current password" autocomplete="current-password" required><input class="settings-control" type="password" name="new_password" placeholder="New password" minlength="8" autocomplete="new-password" required><input class="settings-control" type="password" name="confirm_password" placeholder="Confirm new password" minlength="8" autocomplete="new-password" required><div class="md:col-span-3"><button class="btn btn-primary text-xs" type="submit">Update password</button></div></form></details>
+    </section>
+
+    <section data-settings-panel="privacy" class="settings-card">
+      <h2>Your data</h2>
+      <div class="settings-row"><div><p class="settings-label">Export account data</p><p class="settings-help">Download your profile, CV metadata, applications, reminders and preferences as JSON.</p></div><a class="btn btn-secondary text-xs" href="{{ url_for('settings_export_data') }}">Download my data</a></div>
+    </section>
+
+    <section data-settings-panel="privacy" class="settings-card danger-zone">
+      <h2>Delete account</h2><p class="settings-help mt-1">Permanently deletes your account, CV file, profile photo and personal activity. This cannot be undone.</p>
+      <details class="mt-3"><summary class="cursor-pointer text-sm font-semibold text-purple-700">I want to delete my account</summary><form method="post" action="{{ url_for('settings_delete_account') }}" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4" onsubmit="return confirm('Permanently delete your TalentSouk account and all personal data?');"><input class="settings-control" type="password" name="password" placeholder="Current password" required><input class="settings-control" name="confirmation" placeholder="Type DELETE" required><div class="sm:col-span-2"><button class="btn btn-ghost text-purple-700" type="submit">Delete my account permanently</button></div></form></details>
+    </section>
+  </div></div>
+</div>
+<script src="{{ url_for('static',filename='js/settings_workspace.js',v='20261023-account-redesign') }}" defer></script>
+<script>
+(() => {
+  const provider = document.getElementById('ai-provider');
+  const model = document.getElementById('ai-model');
+  const models = {{ ai_models|tojson }};
+  const saved = model?.dataset.selected || '';
+  function refreshModels(firstLoad = false) {
+    const choices = models[provider.value] || [];
+    model.innerHTML = '';
+    if (!choices.length) {
+      model.append(new Option('No external model', ''));
+      model.disabled = true;
+      return;
+    }
+    model.disabled = false;
+    choices.forEach(item => model.append(new Option(item.label + (item.recommended ? ' — recommended' : ''), item.id)));
+    if (firstLoad && choices.some(item => item.id === saved)) model.value = saved;
+  }
+  provider?.addEventListener('change', () => refreshModels(false));
+  if (provider && model) {
+    refreshModels(true);
+    provider.form?.addEventListener('reset', () => requestAnimationFrame(() => refreshModels(true)));
+  }
+})();
+</script>
+{% endblock %}

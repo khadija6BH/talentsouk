@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Career Performance Lab — TalentSouk{% endblock %}
+{% block content %}
+{% include "components/crm_tabs.html" %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/activity_calendar.css',v='20261016') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/performance_lab.css',v='20261021-cv-results') }}">
+<section id="performance-lab" aria-labelledby="performance-title">
+ <div class="perf-layout">
+  <aside class="perf-overview">
+   <span class="perf-eyebrow">YOUR APPLICATION INSIGHTS</span>
+   <h1 id="performance-title">Career Performance Lab</h1>
+   <p>Explore your application activity and recorded results.</p>
+   <div class="perf-rate" style="--perf-progress:{{ report.outcome_rate if report.outcome_rate is not none else 0 }}%">
+    <div><span>Outcome rate</span><strong>{{ ((report.outcome_rate|string)+'%') if report.outcome_rate is not none else '—' }}</strong><small>{{ 'Recorded outcomes' if report.outcome_rate is not none else 'No sent records' }}</small></div>
+   </div>
+   <a class="perf-records-link" href="{{ url_for('applications') }}">Applications <span aria-hidden="true">↗</span></a>
+   {% if not report.total %}<div class="perf-empty"><h2>Your results will appear as you track applications</h2><p>Start with one relevant offer, then update its status when something changes.</p><a class="btn btn-primary" href="{{ url_for('opportunity_radar') }}">Find an opportunity</a></div>{% endif %}
+  </aside>
+  <div class="perf-workbench">
+   <div class="perf-metrics">
+    {% for label,value,color in [('Tracked applications',report.total,'#A5BCD6'),('Recorded as sent',report.stages.sent,'#4D0E12'),('Recorded outcomes',report.stages.outcomes,'#4A2E27')] %}
+    <article class="perf-metric" style="--perf-accent:{{ color }};--perf-share:{{ (100*value/report.total)|round(1) if report.total else 0 }}%;--perf-delay:{{ loop.index0*80 }}ms"><div class="perf-metric-ring"><strong>{{ value }}</strong></div><h2>{{ label }}</h2></article>
+    {% endfor %}
+   </div>
+   <p class="perf-ring-note">Rings show shares of tracked applications.</p>
+   <section class="performance-chart perf-chart" aria-labelledby="activity-chart-title">
+    <div class="performance-chart-heading"><div><span class="perf-eyebrow">EXPLORE YOUR RECORDS</span><h2 id="activity-chart-title">Application activity</h2><p>Choose a view. Hover or focus a column to see its count.</p></div>
+     <label class="performance-select">Chart view<select id="performance-view"><option value="statuses">Current application statuses</option></select></label>
+    </div>
+    <div id="performance-bars" class="performance-bars" aria-label="Application activity"></div>
+    <p id="performance-chart-empty" hidden>No dated sent records yet.</p>
+    <p id="performance-chart-detail" class="perf-chart-detail" aria-live="polite">Select a column to explore its count.</p>
+    <noscript>{% for row in report.states %}<p>{{ row.label }}: {{ row.count }}</p>{% endfor %}</noscript>
+   </section>
+  </div>
+ </div>
+
+ <section class="activity-calendar" aria-labelledby="calendar-title">
+  <header><div><span class="perf-eyebrow">YOUR CAREER SPACE</span><h2 id="calendar-title">My activity</h2><p>Saved actions by day</p></div><label>Year<select id="activity-year">{% for year in activity_calendar.years %}<option value="{{ year }}">{{ year }}</option>{% endfor %}</select></label></header>
+  <div class="activity-calendar-stats"><div><strong id="activity-total">0</strong><span>Saved actions</span></div><div><strong id="activity-days">0</strong><span>Active days</span></div></div>
+  <div class="activity-calendar-scroll"><div id="activity-months" class="activity-months" aria-hidden="true"></div><div id="activity-grid" class="activity-grid" aria-label="Saved actions by day"></div></div>
+  <footer><p id="activity-day-detail" role="status">Select a day to see its activity.</p><div class="activity-legend"><span>Less</span>{% for level in range(5) %}<i data-level="{{ level }}"></i>{% endfor %}<span>More</span></div></footer>
+  <details><summary>How activity is counted</summary><p>Counts include saved applications, CV versions, completed interviews, projects started and completed skill exercises. Dates are in UTC. Page visits and time spent are not measured.</p></details>
+ </section>
+ <script id="activity-calendar-data" type="application/json">{{ activity_calendar|tojson }}</script>
+ <section class="perf-cv-results" aria-labelledby="cv-results-title">
+  <header class="perf-cv-heading"><div class="perf-cv-title"><span class="perf-cv-icon" aria-hidden="true">▤</span><div><span class="perf-eyebrow">YOUR CV INSIGHTS</span><h2 id="cv-results-title">Results by saved CV version</h2></div></div><p>See the recorded results for each CV version used in your applications.</p></header>
+  <div class="perf-cv-grid">
+   {% for row in report.versions %}
+   <article class="perf-cv-card">
+    <div class="perf-cv-card-heading"><h3>{{ row.label }}</h3><span class="perf-cv-badge">{{ 'Limited data' if row.small_sample else 'Recorded results' }}</span></div>
+    {% if row.label == 'CV version not identified' %}<p class="perf-cv-description">These applications are not linked to an identified saved CV version.</p>{% endif %}
+    <dl class="perf-cv-stats"><div><dt>Sent</dt><dd>{{ row.sent }}</dd></div><div><dt>Outcomes</dt><dd>{{ row.outcomes }}</dd></div><div><dt>Interviews</dt><dd>{{ row.interviews }}</dd></div></dl>
+    <p class="perf-cv-note">{{ 'Fewer than 5 sent applications. More records are needed for a useful comparison.' if row.small_sample else ('Recorded outcome rate: '+row.outcome_rate|string+'%.') }}</p>
+   </article>
+   {% else %}<div class="perf-cv-empty"><h3>No CV results yet</h3><p>Track a sent application with a saved CV version to start comparing your results.</p><a class="perf-records-link" href="{{ url_for('applications') }}">View applications <span aria-hidden="true">↗</span></a></div>{% endfor %}
+  </div>
+ </section>
+ <details class="perf-method"><summary>How these numbers are calculated</summary><p>Based on statuses and dates saved in your account. Drafts are excluded from sent totals. An outcome means a recorded reply, interview, acceptance or rejection; it does not mean success.</p><p>CV groups are descriptive. Different jobs, timing and sample sizes can affect outcomes; these results do not prove a CV caused a response. Applications without an owned saved version remain unidentified.</p></details>
+</section>
+<script id="performance-chart-data" type="application/json">{{ {'states':report.states,'months':report.months}|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static',filename='js/activity_calendar.js',v='20261016') }}" defer></script><script src="{{ url_for('static', filename='js/performance_charts.js',v='20261016-calendar') }}" defer></script>{% endblock %}

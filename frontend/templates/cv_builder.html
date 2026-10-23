@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+{% block title %}CV Builder — TalentSouk{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/portrait_studio.css',v='20261023-free-photo') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cv_builder.css', v='20261023-all-sections') }}">
+<style>
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    font-size: 0.6875rem; font-weight: 600; padding: 0.2rem 0.6rem;
+    border-radius: 9999px; white-space: nowrap;
+  }
+  .progress-track { background-color: #F1F5F9; border-radius: 9999px; height: 0.5rem; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 9999px; }
+  .cv-tab { color: #64748B; border-bottom: 2px solid transparent; }
+  .cv-tab.is-active { color: #673147; border-bottom-color: #673147; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set STATUS_STYLES = {
+  "Strong": "bg-purple-50 text-purple-600",
+  "Weak": "bg-purple-50 text-purple-600",
+  "Missing": "bg-purple-50 text-purple-500"
+} %}
+
+<div class="cv-studio-hero">
+  <div><span class="cv-eyebrow">CV STUDIO</span><h2>Your story. <em>Your next move.</em></h2><p>Build, refine and export your CV.</p><div class="cv-hero-tags"><span>✧ AI writing partner</span><span>✓ ATS-friendly structure</span><span>↗ Ready for your next move</span></div></div>
+  <div class="cv-hero-art" aria-hidden="true"><div class="cv-art-orbit"></div><div class="cv-art-paper"><span>TS / YOUR STORY</span><b>The next<br>great hire.</b><i></i><i></i><i></i><small>EXPERIENCE · POTENTIAL · YOU</small></div><span class="cv-art-seal">Made<br>for your future ↗</span></div>
+</div>
+<nav class="cv-mode-bar" aria-label="CV creation mode">
+ <button type="button" id="studio-edit-mode" class="is-active" aria-pressed="true"><span>01</span> Build &amp; refine</button>
+ <button type="button" id="studio-ai-mode" aria-pressed="false"><span>02</span> Create with AI <small>✧</small></button>
+ <a href="#cv-upload-area"><span>03</span> Import a CV ↗</a>
+</nav>
+<section id="cv-ai-studio" class="cv-ai-studio" hidden aria-labelledby="cv-ai-title">
+ <div class="cv-ai-intro"><span class="cv-eyebrow">CREATE WITH AI</span><h2 id="cv-ai-title">Start with your story.<br>Let AI find the words.</h2><p>Add your notes. Review your AI draft before saving.</p><ol><li><b>1</b> Add your role &amp; background</li><li><b>2</b> Generate a personal draft</li><li><b>3</b> Review, make it yours &amp; export</li></ol><a href="{{ url_for('settings') }}">Manage my AI provider ↗</a></div>
+ <div class="cv-ai-compose"><div class="cv-ai-compose-title"><span>✧</span><div><h3>Your career, in your words</h3><p>Short notes are a perfect place to start.</p></div></div>
+ <div class="cv-personal-fields"><label class="cv-field">Target role<input id="ai-target-role" maxlength="180" placeholder="e.g. Junior Data Analyst"></label><label class="cv-field">CV language<select id="ai-cv-language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select></label></div>
+ <label class="cv-field">Tell us about your journey<textarea id="ai-career-story" rows="7" maxlength="12000" placeholder="What have you studied? Where have you worked? Which projects, skills and achievements are you proud of? Include real names, dates and results when you can."></textarea></label>
+ <p class="cv-ai-fact-note">Review facts before saving.</p>
+ <button id="ai-generate-cv" type="button" class="btn btn-primary">✧ Generate my CV draft <span>→</span></button><p id="ai-cv-status" role="status" aria-live="polite"></p>
+ <div id="ai-cv-review" hidden><strong>Your draft is ready to review</strong><p>Review, apply, then save.</p><pre id="ai-cv-draft-text" dir="auto"></pre><div class="cv-ai-review-actions"><button id="ai-use-draft" type="button" class="btn btn-primary">Use draft in editor →</button><button id="ai-discard-draft" type="button" class="btn btn-secondary">Discard draft</button></div></div>
+ </div>
+</section>
+<div class="cv-workflow-shortcuts"><button id="choose-manual-workflow" type="button">Start from my details ↗</button><button id="choose-uploaded-workflow" type="button" {{ 'disabled' if not cv }}>Use my uploaded CV ↗</button><a href="{{ url_for('portfolio') }}">Add a proof project ↗</a></div>
+
+<!-- Tabs -->
+<div class="flex gap-6 border-b border-slate-200 mb-6">
+  <button id="tab-btn-cv" class="cv-tab is-active pb-3 text-sm font-semibold">My CV</button>
+  {% if false %}
+  <button id="tab-btn-gap" class="cv-tab pb-3 text-sm font-semibold">Skill Gap Analysis</button>
+  {% endif %}
+</div>
+
+<!-- ===================== TAB: MY CV ===================== -->
+<div id="tab-panel-cv">
+  {% if not cv %}
+    <div class="card p-4 mb-4 border border-purple-100 bg-purple-50/40">
+      <p class="font-semibold text-slate-800">No CV yet? Create an ATS-friendly CV below.</p>
+      <p class="text-sm text-slate-600 mt-1">Complete the guided fields, choose a template, and save. You can upload an existing CV instead at any time.</p>
+      <a href="#builder-heading" class="btn btn-primary text-xs mt-3">Start my CV</a>
+    </div>
+  {% endif %}
+  {% if extraction_needs_review %}
+    <div class="card p-4 mb-4 border border-purple-200 bg-purple-50" role="status">
+      <p class="font-semibold text-purple-800">Review the information extracted from your CV</p>
+      <p class="text-sm text-purple-700 mt-1">Skills, education, experience, languages, projects and contact details were prefilled from the uploaded document. Correct anything needed, then click <strong>Save CV</strong>.</p>
+      <a class="btn btn-primary text-xs mt-3" href="#builder-heading">Review extracted fields</a>
+      <div class="flex flex-wrap gap-2 mt-3"><button id="review-extracted-cv" type="button" class="btn btn-primary text-xs">Extract &amp; edit information</button><button id="keep-original-cv" type="button" class="btn btn-secondary text-xs">Keep original &amp; analyze</button></div>
+    </div>
+  {% endif %}
+  {% if cv %}
+    <span id="uploaded"></span><span id="upload"></span><div id="cv-upload-area" class="card p-5 mb-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <span class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 {{ 'bg-purple-50' if cv.file_extension == 'pdf' else 'bg-blue-50' }}">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{ '#673147' if cv.file_extension == 'pdf' else '#673147' }}" stroke-width="1.8"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8l-4-5Z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>
+      </span>
+      <div class="flex-1 min-w-0">
+        <p class="font-display font-semibold text-slate-800 truncate">{{ cv.original_filename }}</p>
+        <p class="text-xs text-slate-500 mt-0.5">
+          {{ cv.file_extension|upper }} · {{ (cv.file_size / 1024)|round|int }} KB · Uploaded {{ cv.uploaded_at }}
+        </p>
+        <p class="text-xs mt-1 {{ 'text-purple-600' if cv.extraction_status == 'extracted' else 'text-purple-600' }}">
+          {% if cv.extraction_status == 'extracted' %}
+            Text extracted · {{ cv.extracted_text|length }} characters{% if cv.page_count %} · {{ cv.page_count }} pages{% endif %}
+          {% else %}
+            No readable text detected
+          {% endif %}
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('cv_view') }}" target="_blank" class="btn btn-ghost text-xs">View</a>
+        <a href="{{ url_for('cv_download') }}" class="btn btn-ghost text-xs">Download</a>
+        <button id="show-replace-btn" class="btn btn-secondary text-xs">Replace</button>
+        <form method="post" action="{{ url_for('cv_delete') }}" onsubmit="return confirm('Delete your uploaded CV? This cannot be undone.');">
+          <button type="submit" class="btn btn-ghost text-xs text-purple-500 hover:bg-purple-50">Delete</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="replace-form-wrapper" class="hidden">
+      {% include "components/_cv_upload_form.html" %}
+    </div>
+  {% else %}
+    <div id="cv-upload-area">{% include "components/_cv_upload_form.html" %}</div>
+  {% endif %}
+
+  <span id="manual"></span><span id="create"></span><section id="cv-editor-workspace" class="cv-workspace" aria-labelledby="builder-heading">
+    <div class="cv-section-heading">
+      <div>
+        <h2 id="builder-heading" class="font-display font-semibold text-lg text-slate-800">Build your CV</h2>
+        <p class="text-sm text-slate-500 mt-1">Edit your details. Preview live.</p>
+      </div>
+      <div class="cv-source-switch" role="group" aria-label="CV starting point">
+        <button type="button" class="cv-source-button" data-source="uploaded" aria-pressed="false">Use existing CV</button>
+        <button type="button" class="cv-source-button" data-source="manual" aria-pressed="false">Create manually</button>
+      </div>
+    </div>
+
+    <p id="cv-source-note" class="cv-source-note" aria-live="polite"></p>
+
+    <div class="cv-photo-toolbar">
+      <div class="cv-photo-preview-wrap">
+        <img id="cv-current-photo" {% if cv_photo_url %}src="{{ cv_photo_url }}"{% else %}hidden{% endif %} alt="Current CV photo" class="cv-photo-thumb"><span id="cv-photo-placeholder" class="cv-photo-placeholder" aria-hidden="true" {% if cv_photo_url %}hidden{% endif %}>Photo</span>
+        <div><strong>CV photo</strong><p>Optional · Hidden in Minimal.</p></div>
+      </div>
+      <form method="post" action="{{ url_for('profile_photo_update') }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="next" value="cv_builder">
+        <label class="btn btn-secondary cursor-pointer">{{ 'Change photo' if cv_photo_url else 'Upload photo' }}<input class="sr-only" type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp" required onchange="this.form.requestSubmit()"></label>
+        <span class="text-xs text-slate-400">JPG, PNG or WebP · max 2 MB</span>
+        <a class="btn btn-primary portrait-studio-shortcut" href="#cv-portrait-studio" data-open-portrait-studio>✧ Open Photo Studio</a>
+      </form>
+    </div>
+
+    {% include 'components/portrait_studio.html' %}
+
+    <form id="cv-profile-form" class="cv-builder-grid">
+      <nav class="cv-section-nav" aria-label="CV sections">
+        <div class="cv-completion"><div><strong>Your CV, coming together</strong><span id="cv-completion-value">0%</span></div><progress id="cv-completion-progress" value="0" max="100">0%</progress><p></p></div><p class="cv-section-nav-title">MAKE IT YOURS</p>
+        <button type="button" data-focus="cv-full-name" class="is-active">Personal info</button>
+        <button type="button" data-focus="cv-summary">Professional summary</button>
+        <button type="button" data-focus="cv-education">Education</button>
+        <button type="button" data-focus="cv-skills">Skills</button>
+        <button type="button" data-focus="cv-experience">Experience</button>
+        <button type="button" data-focus="cv-projects">Projects</button>
+        <button type="button" data-focus="cv-certifications">Certifications</button>
+        <button type="button" data-focus="cv-languages">Languages</button>
+        <div class="cv-ats-note"><strong>ATS-friendly format</strong><span>Clear and easy to scan.</span></div>
+      </nav>
+      <div class="cv-editor-panel"><div class="cv-editor-title"><span class="cv-eyebrow" id="cv-step-label">YOUR DETAILS</span><h3 id="cv-step-title">The person behind the CV</h3><p id="cv-step-description">Start with the essentials. Your preview updates as you write.</p></div>
+        <section class="cv-design-panel" aria-labelledby="cv-design-title">
+          <div><h3 id="cv-design-title">Choose your CV design</h3><p>Template and color are saved with this CV.</p></div>
+          <div class="cv-template-gallery">
+            {% for template in cv_templates %}<button type="button" class="cv-template-card" data-template="{{ template }}"><span class="cv-template-mini" data-template-preview="{{ template }}"></span><strong>{{ template }}</strong></button>{% endfor %}
+          </div>
+          <div class="cv-color-picker" role="group" aria-label="CV accent color">
+            {% for name, color in cv_accent_colors.items() %}<button type="button" class="cv-color-option" data-color="{{ color }}" title="{{ name }}" aria-label="{{ name }}" style="--swatch:{{ color }}"></button>{% endfor %}
+          </div>
+          <input id="cv-accent-color" type="hidden" value="#673147">
+        </section>
+        <div class="cv-personal-fields">
+          <label class="cv-field">Full name
+            <input id="cv-full-name" type="text" maxlength="150" autocomplete="name">
+          </label>
+          <label class="cv-field">Target job title
+            <input id="cv-job-title" type="text" maxlength="180" list="job-title-options" placeholder="e.g. Data Analyst">
+          </label>
+          <label class="cv-field">Email
+            <input id="cv-email" type="email" maxlength="254" autocomplete="email">
+          </label>
+          <label class="cv-field">Phone
+            <input id="cv-phone" type="tel" maxlength="60" autocomplete="tel">
+          </label>
+          <label class="cv-field">Location
+            <input id="cv-location" type="text" maxlength="120" autocomplete="address-level2" list="location-options">
+          </label>
+          <label class="cv-field">LinkedIn
+            <input id="cv-linkedin" type="url" maxlength="300" placeholder="https://linkedin.com/in/your-profile">
+          </label>
+          <label class="cv-field">GitHub
+            <input id="cv-github" type="url" maxlength="300" placeholder="https://github.com/your-profile">
+          </label>
+        </div>
+        <datalist id="job-title-options"><option>Software Developer</option><option>Web Developer</option><option>Data Analyst</option><option>Data Scientist</option><option>AI Engineer</option><option>Cybersecurity Analyst</option><option>Cloud Engineer</option><option>Network Engineer</option><option>Project Manager</option><option>Marketing Specialist</option></datalist>
+        <datalist id="location-options"><option>Marrakech</option><option>Casablanca</option><option>Rabat</option><option>Tanger</option><option>Agadir</option><option>Remote</option><option>Hybrid</option></datalist>
+
+        <div class="cv-field">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2"><label for="cv-summary">Professional summary</label><div class="flex gap-2"><select id="summary-language" class="filter-select text-xs"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select><button id="generate-summary-button" type="button" class="btn btn-secondary text-xs">Generate with AI</button></div></div>
+          <textarea id="cv-summary" rows="4" maxlength="4000" placeholder="A concise summary of your real experience and goals"></textarea>
+          <p id="summary-ai-status" class="text-xs text-slate-500 mt-1.5" role="status" aria-live="polite">AI uses only the information entered in this CV.</p>
+        </div>
+        <label class="cv-field">Education
+          <textarea id="cv-education" rows="4" maxlength="10000" placeholder="Degree, institution, dates, and relevant details"></textarea>
+          <span class="cv-choice-label">Quick choices</span>
+          <span class="cv-choice-list" data-target="cv-education"><button type="button">Bac+2</button><button type="button">Bachelor's</button><button type="button">Master's</button><button type="button">Engineering degree</button><button type="button">Doctorate</button></span>
+        </label>
+        <div class="cv-field cv-experience-editor">
+          <label for="cv-experience">Experience</label>
+          <p class="cv-experience-help" id="experience-help">Write your notes. AI will format them professionally.</p>
+          <textarea id="cv-experience" rows="6" maxlength="12000" aria-describedby="experience-help" placeholder="For example: I worked as an intern at Atlas Studio from March to June 2025. I cleaned Excel files, built SQL reports and helped the team prepare weekly dashboards."></textarea>
+          <div class="cv-experience-ai-toolbar"><span></span><div><label class="sr-only" for="experience-ai-language">Experience language</label><select id="experience-ai-language" aria-label="Experience language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select><button id="experience-generate-ai" type="button" class="cv-ai-write-button">✧ Generate with AI</button></div></div>
+          <p id="experience-ai-status" class="cv-experience-help" role="status" aria-live="polite"></p>
+          <div id="experience-ai-review" class="cv-experience-review" hidden><strong>A professional version of your experience</strong><p>Review before applying.</p><pre id="experience-ai-result" dir="auto"></pre><div><button id="experience-ai-apply" type="button" class="btn btn-primary">Use this version</button><button id="experience-ai-cancel" type="button" class="btn btn-secondary">Keep my text</button></div></div>
+        </div>
+        <label class="cv-field">Skills
+          <textarea id="cv-skills" rows="3" maxlength="5000" placeholder="List skills you can substantiate"></textarea>
+          <span class="cv-choice-label">Choose skills</span>
+          <span class="cv-choice-list" data-target="cv-skills"><button type="button">Python</button><button type="button">JavaScript</button><button type="button">SQL</button><button type="button">Excel</button><button type="button">Power BI</button><button type="button">Data Analysis</button><button type="button">Machine Learning</button><button type="button">Communication</button><button type="button">Teamwork</button><button type="button">Project Management</button></span>
+        </label>
+        <label class="cv-field">Projects
+          <textarea id="cv-projects" rows="4" maxlength="10000" placeholder="Project name, contribution, tools, and outcome"></textarea>
+        </label>
+        <div class="cv-personal-fields">
+          <label class="cv-field">Certifications
+            <textarea id="cv-certifications" rows="3" maxlength="5000"></textarea>
+          </label>
+          <label class="cv-field">Languages
+            <textarea id="cv-languages" rows="3" maxlength="2000"></textarea>
+            <span class="cv-choice-list" data-target="cv-languages"><button type="button">Arabic</button><button type="button">French</button><button type="button">English</button><button type="button">Spanish</button></span>
+          </label>
+        </div>
+        <div class="cv-form-footer">
+          <label class="cv-field cv-template-field">Template
+            <select id="cv-template-select" class="sr-only" aria-label="Selected CV template">
+              {% for template in cv_templates %}<option value="{{ template }}">{{ template }}</option>{% endfor %}
+            </select>
+          </label>
+          <div class="cv-save-actions">
+            <button class="btn btn-primary" type="submit">Save CV</button>
+            <span id="cv-save-status" class="cv-save-status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cv-preview-panel">
+        <div class="cv-preview-heading">
+          <h3 class="font-display font-semibold text-slate-800">Your next first impression</h3>
+          <span class="cv-preview-badges"><span class="cv-ats-badge">ATS Friendly</span><span id="cv-preview-template" class="cv-preview-template">Modern</span></span>
+        </div>
+        <p class="cv-preview-caption">LIVE PREVIEW <span>• Updates as you write</span></p><article id="cv-preview" class="cv-document" aria-live="polite"></article>
+      </div>
+    </form>
+  </section>
+
+  <a class="btn btn-secondary mt-5" href="{{ url_for('ai_studio',tab='optimize') }}">Optimize my CV in AI Studio ↗</a>
+
+</div>
+
+<div id="summary-options-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="summary-options-title">
+  <div id="summary-options-backdrop" class="absolute inset-0 bg-slate-900/50"></div>
+  <div class="relative card w-full max-w-5xl p-6 max-h-[88vh] overflow-y-auto">
+    <button id="summary-options-close" type="button" class="absolute top-4 right-4 p-2 text-slate-500" aria-label="Close">×</button>
+    <h2 id="summary-options-title" class="font-display font-bold text-xl text-slate-800">Choose your professional summary</h2>
+    <p class="text-sm text-slate-500 mt-1">Select one option, then review it in the CV editor before saving.</p>
+    <div id="summary-options" class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5"></div>
+  </div>
+</div>
+
+<!-- ===================== TAB: SKILL GAP ANALYSIS ===================== -->
+{% if false %}
+<div id="tab-panel-gap" class="hidden" aria-label="Skill Gap Analysis">
+  {% if not cv %}
+    <div class="card flex flex-col items-center justify-center text-center px-6 py-16">
+      <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-5">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#673147" stroke-width="1.8"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8l-4-5Z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>
+      </div>
+      <h2 class="font-display font-semibold text-slate-800 text-lg mb-1.5">Upload your CV to see your skill gap</h2>
+      <p class="text-sm text-slate-500 max-w-sm">Once a CV is on file, use the CV Optimizer to compare it with a selected database offer.</p>
+    </div>
+  {% elif skill_gap %}
+    <!-- Summary cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div class="card p-5">
+        <p class="text-2xl font-display font-bold text-slate-800">{{ skill_gap.overall_match_percent }}%</p>
+        <p class="text-sm text-slate-500 mt-0.5">Overall skill match</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-2xl font-display font-bold text-slate-800">{{ skill_gap.average_gap_percent }}%</p>
+        <p class="text-sm text-slate-500 mt-0.5">Average skill gap</p>
+      </div>
+      <div class="card p-5">
+        <p class="text-2xl font-display font-bold text-slate-800">{{ skill_gap.weak_or_missing_count }}</p>
+        <p class="text-sm text-slate-500 mt-0.5">Skills needing attention</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-6">
+      <!-- Skill cards -->
+      <div class="xl:col-span-3 space-y-3">
+        <h3 class="font-display font-semibold text-slate-800 mb-1">Skill breakdown</h3>
+        {% for s in skill_gap.skills %}
+          <div class="card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="font-medium text-slate-800 text-sm">{{ s.name }}</p>
+                <p class="text-xs text-slate-400">{{ s.category }}</p>
+              </div>
+              <span class="status-badge {{ STATUS_STYLES.get(s.status) }}">{{ s.status }}</span>
+            </div>
+            <div class="progress-track mb-1.5">
+              <div class="progress-fill" style="width: {{ s.current }}%; background: {{ '#673147' if s.status == 'Strong' else ('#A18F93' if s.status == 'Weak' else '#673147') }};"></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500">
+              <span>Current: {{ s.current }}%</span>
+              <span>Required: {{ s.required }}%</span>
+              {% if s.gap > 0 %}<span class="text-slate-400">Gap: {{ s.gap_percent }}%</span>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Radar chart -->
+      <div class="xl:col-span-2 card p-5">
+        <h3 class="font-display font-semibold text-slate-800 mb-4">Current vs. required</h3>
+        <canvas id="skillRadarChart" height="340"></canvas>
+      </div>
+    </div>
+
+    <!-- Learning roadmap -->
+    <div class="card p-5">
+      <h3 class="font-display font-semibold text-slate-800 mb-1">Learning roadmap</h3>
+      <p class="text-sm text-slate-500 mb-4">Suggested order based on the verified skill-gap result.</p>
+      <ol class="space-y-4">
+        {% for step in skill_gap.roadmap %}
+          <li class="flex gap-3">
+            <span class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0">{{ loop.index }}</span>
+            <div>
+              <p class="text-sm font-medium text-slate-800">{{ step.skill }} <span class="text-xs font-normal text-slate-400">· {{ step.duration }}</span></p>
+              <p class="text-sm text-slate-600 mt-0.5">{{ step.action }}</p>
+            </div>
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  {% else %}
+    <div class="card flex flex-col items-center justify-center text-center px-6 py-16">
+      <h2 class="font-display font-semibold text-slate-800 text-lg mb-1.5">No verified skill-gap analysis available</h2>
+      <p class="text-sm text-slate-500 max-w-lg">Use the CV Optimizer to compare your saved CV with a real offer from the current database. No generic skill scores are displayed.</p>
+    </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static',filename='js/portrait_studio.js',v='20261023-free-photo') }}" defer></script>
+<script>
+  window.CV_BUILDER_CONFIG = {{ builder_data|tojson }};
+  window.CV_BUILDER_OFFERS = {{ offers|tojson }};
+  window.CV_BUILDER_TEMPLATES = {{ cv_templates|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/cv_builder.js', v='20261023-portraits') }}" defer></script>
+<script>
+  // ---------------------------------------------------------------------
+  // Tabs
+  // ---------------------------------------------------------------------
+  const tabCvBtn = document.getElementById("tab-btn-cv");
+  const tabGapBtn = document.getElementById("tab-btn-gap");
+  const tabCvPanel = document.getElementById("tab-panel-cv");
+  const tabGapPanel = document.getElementById("tab-panel-gap");
+
+  function activateTab(tab) {
+    const showCv = tab === "cv";
+    tabCvPanel.classList.toggle("hidden", !showCv);
+    tabGapPanel?.classList.toggle("hidden", showCv);
+    tabCvBtn.classList.toggle("is-active", showCv);
+    tabGapBtn?.classList.toggle("is-active", !showCv);
+  }
+  tabCvBtn.addEventListener("click", () => activateTab("cv"));
+  tabGapBtn?.addEventListener("click", () => activateTab("gap"));
+
+  const replaceWrapper = document.getElementById("replace-form-wrapper");
+
+  // Jump straight to the Skill Gap tab or open upload when requested by the page URL.
+  if (tabGapBtn && ["#skill-gap", "#tab-panel-gap"].includes(window.location.hash)) activateTab("gap");
+  if (window.location.hash === "#upload" && replaceWrapper) {
+    replaceWrapper.classList.remove("hidden");
+    replaceWrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // ---------------------------------------------------------------------
+  // Replace CV — toggle the inline upload form
+  // ---------------------------------------------------------------------
+  const showReplaceBtn = document.getElementById("show-replace-btn");
+  if (showReplaceBtn) {
+    showReplaceBtn.addEventListener("click", () => {
+      replaceWrapper.classList.toggle("hidden");
+    });
+  }
+
+  {% if false %}
+  // ---------------------------------------------------------------------
+  // Radar chart for a verified skill-gap result, when one is available.
+  // ---------------------------------------------------------------------
+  new Chart(document.getElementById("skillRadarChart"), {
+    type: "radar",
+    data: {
+      labels: {{ skill_gap.skills|map(attribute='name')|list|tojson }},
+      datasets: [
+        {
+          label: "Your level",
+          data: {{ skill_gap.skills|map(attribute='current')|list|tojson }},
+          borderColor: "#673147",
+          backgroundColor: "rgba(37, 99, 235, 0.15)",
+          pointBackgroundColor: "#673147",
+        },
+        {
+          label: "Required",
+          data: {{ skill_gap.skills|map(attribute='required')|list|tojson }},
+          borderColor: "#D8C7D8",
+          backgroundColor: "rgba(155, 127, 212, 0.12)",
+          pointBackgroundColor: "#D8C7D8",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: "#F1F5F9" }, pointLabels: { font: { size: 12, weight: "500" } } } },
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 12 } } } },
+    },
+  });
+  {% endif %}
+</script>
+{% endblock %}

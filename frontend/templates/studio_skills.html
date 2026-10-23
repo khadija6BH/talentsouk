@@ -1,0 +1,192 @@
+{% extends "studio_base.html" %}
+{% block title %}Skill Gap — TalentSouk{% endblock %}
+
+{% block head %}{{ super() }}
+<style>
+  .gap-hero{background:linear-gradient(135deg,#311432,#673147);color:#fff;border-radius:1.5rem;padding:1.6rem;position:relative;overflow:hidden}
+  .gap-hero:after{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;top:-110px;background:rgba(230,230,250,.12)}
+  .gap-stat{background:#fff;border:1px solid #eee7ec;border-radius:1rem;padding:1rem}
+  .gap-chart{position:relative;height:300px}
+  .skill-row{display:grid;grid-template-columns:minmax(130px,1fr) 2fr auto;gap:1rem;align-items:center;padding:.8rem 0;border-bottom:1px solid #f1edf0}
+  .demand-track{height:.55rem;background:#eee9ee;border-radius:999px;overflow:hidden}.demand-fill{height:100%;background:linear-gradient(90deg,#A18F93,#673147);border-radius:999px}
+  .roadmap-number{width:2.1rem;height:2.1rem;display:grid;place-items:center;border-radius:.75rem;background:#D8C7D8;color:#311432;font-weight:800;flex:none}
+  .roadmap-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;position:relative}
+  .roadmap-card{position:relative;border:1px solid #e9e1e7;border-radius:1rem;padding:1rem;background:#fff;min-height:190px;transition:.18s ease}
+  .roadmap-card:hover{transform:translateY(-3px);border-color:#A18F93;box-shadow:0 12px 28px rgba(49,20,50,.09)}
+  .roadmap-card:after{content:"→";position:absolute;right:-.78rem;top:50%;z-index:2;width:1.5rem;height:1.5rem;display:grid;place-items:center;border-radius:50%;background:#D8C7D8;color:#673147;font-weight:800}
+  .roadmap-card:nth-child(3n):after,.roadmap-card:last-child:after{display:none}
+  .roadmap-mini-step{display:flex;align-items:center;gap:.45rem;font-size:.75rem;color:#64748b}
+  .roadmap-mini-step span{width:1.35rem;height:1.35rem;display:grid;place-items:center;border-radius:50%;background:#f4eef3;color:#673147;font-weight:700;flex:none}
+  .ai-pipeline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.25rem}
+  .ai-pipeline-card{position:relative;border:1px solid #d9c7d5;background:linear-gradient(145deg,#fff,#f8f4f7);border-radius:1rem;padding:1rem}
+  .ai-pipeline-card:after{content:"→";position:absolute;right:-.78rem;top:2.2rem;width:1.5rem;height:1.5rem;border-radius:50%;display:grid;place-items:center;background:#673147;color:#fff;z-index:2}
+  .ai-pipeline-card:last-child:after{display:none}
+  .ai-pipeline-index{width:1.7rem;height:1.7rem;border-radius:.55rem;display:grid;place-items:center;background:#673147;color:#fff;font-size:.72rem;font-weight:800}
+  .ai-pipeline-detail{display:grid;grid-template-columns:1.5rem 1fr;gap:.45rem;margin-top:.7rem;font-size:.76rem;color:#64748b;line-height:1.4}
+  .ai-pipeline-detail b{color:#673147}
+  .cv-source-choice{display:flex;align-items:center;gap:.8rem;text-align:left;border:1px solid #e7dfe5;border-radius:1rem;padding:.85rem 1rem;background:#fff;color:#475569;transition:.18s ease;min-width:220px}
+  .cv-source-choice:hover{border-color:#A18F93;transform:translateY(-1px);box-shadow:0 8px 22px rgba(49,20,50,.08)}
+  .cv-source-choice.is-active{border-color:#673147;background:#f7f0f5;color:#311432;box-shadow:inset 0 0 0 1px #673147}
+  .cv-source-icon{width:2.3rem;height:2.3rem;display:grid;place-items:center;border-radius:.75rem;background:#E6E6FA;color:#673147;flex:none}
+  @media(max-width:900px){.roadmap-flow,.ai-pipeline{grid-template-columns:1fr}.roadmap-card{min-height:0}.roadmap-card:after,.ai-pipeline-card:after{content:"↓";right:auto;left:50%;top:auto;bottom:-.8rem}.roadmap-card:nth-child(3n):after{display:grid}.roadmap-card:last-child:after,.ai-pipeline-card:last-child:after{display:none}}
+  @media(max-width:640px){.skill-row{grid-template-columns:1fr auto}.skill-row .demand{grid-column:1/-1}.gap-chart{height:250px}}
+</style>
+{% endblock %}
+
+{% block studio_content %}
+<section class="card p-5 mb-5 flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">Test a concept before you learn</h3><p class="text-sm text-slate-500 mt-1">Practice SQL, Python, Git or Communication and review explained answers.</p></div><a class="btn btn-primary" href="{{ url_for('skill_practice') }}">Start skill practice</a></section>
+<section class="gap-hero mb-6">
+  <div class="relative z-10 max-w-2xl">
+    <span class="text-xs uppercase tracking-[.18em] text-[#D8C7D8] font-semibold">Personal market intelligence</span>
+    <h2 class="font-display font-bold text-2xl mt-2">Skill Gap Analysis</h2>
+    <p class="text-sm text-[#E6E6FA] mt-2">Compare the skills documented in your current CV with real job offers and company data, then follow a personalized learning roadmap.</p>
+  </div>
+</section>
+
+<nav class="flex flex-wrap gap-3 mb-6" aria-label="Skill analysis sections">{% if analysis.has_cv_evidence %}<a class="btn btn-secondary" href="#technical-skills">Technical skills</a><a class="btn btn-secondary" href="#soft-skills">Soft skills</a><a class="btn btn-secondary" href="#technical-roadmap">Technical roadmap</a><a class="btn btn-secondary" href="#soft-roadmap">Soft-skills roadmap</a>{% endif %}<a class="btn btn-primary" href="{{ url_for('interview_helper',offer_id=selected_offer.id if selected_offer else None) }}">Practice with AI Simulator</a></nav>
+<form method="get" action="{{ url_for('ai_studio') }}" class="card p-4 mb-6"><input type="hidden" name="tab" value="skills">
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><h3 class="font-semibold text-slate-800">Choose your profile</h3><p class="text-xs text-slate-500 mt-1">One click loads the existing version directly from your account. No re-upload is required.</p></div><span class="text-xs rounded-full bg-purple-50 text-purple-700 px-3 py-1">Current: {{ 'Candidate profile' if cv_source == 'dna' else 'Uploaded CV' if cv_source == 'uploaded' else 'Created CV' }}</span></div>
+  <a href="{{ url_for('profile') }}" class="btn btn-ghost mb-3">Review my profile</a>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-3"><button name="cv_source" value="dna" type="submit" class="cv-source-choice {{ 'is-active' if cv_source == 'dna' }}"><span class="cv-source-icon">◈</span><span><strong class="block text-sm">Use Candidate profile</strong><small class="block text-xs text-slate-500">Shared profile with your corrections and reviews</small></span></button>
+    {% if has_uploaded_cv %}
+    <button name="cv_source" value="uploaded" type="submit" class="cv-source-choice {{ 'is-active' if cv_source == 'uploaded' }}">
+      <span class="cv-source-icon">↑</span><span><strong class="block text-sm">Use uploaded CV</strong><small class="block text-xs text-slate-500 truncate max-w-[260px]">{{ uploaded_cv_name }}</small></span>
+    </button>
+    {% else %}
+    <a href="{{ url_for('cv_builder') }}#upload" class="cv-source-choice"><span class="cv-source-icon">↑</span><span><strong class="block text-sm">Upload a CV</strong><small class="block text-xs text-slate-500">No uploaded CV saved yet</small></span></a>
+    {% endif %}
+    {% if has_created_cv %}
+    <button name="cv_source" value="manual" type="submit" class="cv-source-choice {{ 'is-active' if cv_source == 'manual' }}">
+      <span class="cv-source-icon">✦</span><span><strong class="block text-sm">Use created CV</strong><small class="block text-xs text-slate-500">{{ created_cv_name }} · saved in CV Builder</small></span>
+    </button>
+    {% else %}
+    <a href="{{ url_for('cv_builder') }}#manual" class="cv-source-choice"><span class="cv-source-icon">✦</span><span><strong class="block text-sm">Create a CV</strong><small class="block text-xs text-slate-500">No created CV saved yet</small></span></a>
+    {% endif %}
+  </div>
+  <div class="flex flex-col md:flex-row md:items-end gap-3 mt-4 pt-4 border-t border-slate-100">
+  <label class="text-xs font-semibold text-slate-600 flex-1">Target offer (optional)<select name="offer_id" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Compare with the selected market</option>{% for offer in offers %}<option value="{{ offer.id }}"{% if selected_offer and selected_offer.id == offer.id %} selected{% endif %}>{{ offer.title }} · {{ offer.company_name|default('') }}</option>{% endfor %}</select></label>
+  <label class="text-xs font-semibold text-slate-600 flex-1">Target market
+    <select name="field" class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+      <option value="any" {{ 'selected' if field == 'any' }}>All available offers</option>
+      <option value="software" {{ 'selected' if field == 'software' }}>Software &amp; Web</option>
+      <option value="ai_data" {{ 'selected' if field == 'ai_data' }}>AI &amp; Data</option>
+      <option value="cybersecurity" {{ 'selected' if field == 'cybersecurity' }}>Cybersecurity &amp; Networking</option>
+      <option value="cloud" {{ 'selected' if field == 'cloud' }}>Cloud &amp; DevOps</option>
+      <option value="civil_engineering" {{ 'selected' if field=='civil_engineering' }}>Génie civil</option>
+      <option value="construction" {{ 'selected' if field=='construction' }}>Construction / BTP</option>
+    </select>
+  </label>
+  <input type="hidden" name="cv_source" value="{{ cv_source }}">
+  <button class="btn btn-primary" type="submit">Refresh analysis</button>
+  </div>
+</form>
+
+<section id="learning-checklist" class="card p-5 mb-6"><h3 class="font-semibold">Project validation checklist</h3><p class="text-sm text-slate-500 mt-2">Define the expected result, run a normal case, an edge case and an invalid-input case. Save your result and explain a limitation. Learning completion is self-reported and never adds a skill to Candidate profile automatically.</p>{% if selected_offer %}<p class="text-sm text-purple-700 mt-3">Target: {{ selected_offer.title }}. Coverage describes detected requirements documented in your profile, not a proficiency level.</p>{% endif %}</section>
+{% if not analysis.has_cv_evidence %}
+<section class="card p-10 text-center">
+  <div class="w-14 h-14 mx-auto rounded-2xl bg-purple-50 text-purple-700 grid place-items-center mb-4">✦</div>
+  <h3 class="font-display font-semibold text-lg text-slate-800">Save or upload your CV first</h3>
+  <p class="text-sm text-slate-500 mt-2 max-w-lg mx-auto">Skill Gap only uses information genuinely present in your CV. Complete your created CV or upload an existing document to start.</p>
+  <a href="{{ url_for('cv_builder') }}" class="btn btn-primary mt-5">Open CV Builder</a>
+</section>
+{% else %}
+<section class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+  <div class="gap-stat"><p class="text-xs text-slate-500">Market coverage</p><strong class="font-display text-2xl text-[#673147]">{{ analysis.coverage }}%</strong></div>
+  <div class="gap-stat"><p class="text-xs text-slate-500">Documented skills</p><strong class="font-display text-2xl text-slate-800">{{ analysis.documented_count }}</strong></div>
+  <div class="gap-stat"><p class="text-xs text-slate-500">Priority gaps</p><strong class="font-display text-2xl text-slate-800">{{ analysis.missing_count }}</strong></div>
+  <div class="gap-stat"><p class="text-xs text-slate-500">Real offers analyzed</p><strong class="font-display text-2xl text-slate-800">{{ analysis.offers_analyzed }}</strong></div>
+</section>
+
+<section class="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-6">
+  <article class="card p-5 xl:col-span-2">
+    <h3 class="font-display font-semibold text-slate-800">CV coverage</h3>
+    <p class="text-xs text-slate-500 mt-1">Documented vs missing skills among detected market requirements.</p>
+    <div class="gap-chart mt-3"><canvas id="coverage-chart"></canvas><p class="chart-fallback hidden text-sm text-slate-500 text-center pt-20">Chart unavailable. The exact results remain listed below.</p></div>
+  </article>
+  <article class="card p-5 xl:col-span-3">
+    <h3 class="font-display font-semibold text-slate-800">Most requested skills</h3>
+    <p class="text-xs text-slate-500 mt-1">Frequency found in the selected real offers and companies.</p>
+    <div class="gap-chart mt-3"><canvas id="demand-chart"></canvas><p class="chart-fallback hidden text-sm text-slate-500 text-center pt-20">Chart unavailable. The exact results remain listed below.</p></div>
+  </article>
+</section>
+
+<section class="card p-5 mb-6">
+  <div class="flex flex-wrap items-end justify-between gap-2 mb-3"><div><h3 class="font-display font-semibold text-slate-800">Evidence-based skill comparison</h3><p class="text-xs text-slate-500 mt-1">A skill counts as present only when it is documented in the selected CV.</p></div><span class="text-xs text-slate-400">{{ analysis.companies_analyzed }} companies scanned</span></div>
+  {% for skill in analysis.skills %}
+  <div class="skill-row">
+    <div><p class="text-sm font-semibold text-slate-800">{{ skill.name }}</p><p class="text-xs text-slate-400">{{ skill.category }}</p></div>
+    <div class="demand"><div class="flex justify-between text-[11px] text-slate-500 mb-1"><span>Market demand</span><span>{{ skill.demand_count }} record(s)</span></div><div class="demand-track"><div class="demand-fill" style="width:{{ skill.demand_percent }}%"></div></div></div>
+    {% if skill.documented %}<span class="text-xs font-semibold rounded-full bg-purple-50 text-purple-700 px-2.5 py-1">In your CV</span>{% else %}<span class="text-xs font-semibold rounded-full bg-slate-100 text-slate-600 px-2.5 py-1">Missing</span>{% endif %}
+  </div>
+  {% else %}<p class="text-sm text-slate-500 py-6">No recognizable skill requirements were found for this market filter.</p>{% endfor %}
+</section>
+
+<section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6" aria-label="Technical and soft skill analysis">
+  <article id="technical-skills" class="card p-5" style="scroll-margin-top:90px">
+    <div class="flex items-end justify-between gap-3 mb-3"><div><h3 class="font-display font-semibold text-slate-800">Technical skills</h3><p class="text-xs text-slate-500 mt-1">Technologies, tools and role knowledge.</p></div><strong class="text-[#673147]">{{ analysis.technical_coverage }}%</strong></div>
+    {% for skill in analysis.technical_skills %}<div class="skill-row"><div><p class="text-sm font-semibold text-slate-800">{{ skill.name }}</p><p class="text-xs text-slate-400">{{ skill.category }}</p></div><div class="demand"><div class="flex justify-between text-[11px] text-slate-500 mb-1"><span>Market demand</span><span>{{ skill.demand_count }} record(s)</span></div><div class="demand-track"><div class="demand-fill" style="width:{{ skill.demand_percent }}%"></div></div></div>{% if skill.documented %}<span class="text-xs rounded-full bg-purple-50 text-purple-700 px-2.5 py-1">In CV</span>{% else %}<span class="text-xs rounded-full bg-slate-100 text-slate-600 px-2.5 py-1">Missing</span>{% endif %}</div>{% else %}<p class="text-sm text-slate-500 py-5">No technical requirement detected.</p>{% endfor %}
+  </article>
+  <article id="soft-skills" class="card p-5" style="scroll-margin-top:90px">
+    <div class="flex items-end justify-between gap-3 mb-3"><div><h3 class="font-display font-semibold text-slate-800">Soft skills</h3><p class="text-xs text-slate-500 mt-1">Communication, behavior and interview readiness.</p></div><strong class="text-[#673147]">{{ analysis.soft_coverage }}%</strong></div>
+    {% for skill in analysis.soft_skills %}<div class="skill-row"><div><p class="text-sm font-semibold text-slate-800">{{ skill.name }}</p><p class="text-xs text-slate-400">{{ skill.category }}</p></div><div class="demand"><div class="flex justify-between text-[11px] text-slate-500 mb-1"><span>Evidence</span><span>{{ skill.interview_gap_count|default(0) }} interview gap(s)</span></div><div class="demand-track"><div class="demand-fill" style="width:{{ skill.demand_percent if skill.demand_percent else (70 if skill.interview_gap_count|default(0) else 10) }}%"></div></div></div>{% if skill.documented and not skill.interview_gap_count|default(0) %}<span class="text-xs rounded-full bg-purple-50 text-purple-700 px-2.5 py-1">Ready</span>{% else %}<span class="text-xs rounded-full bg-slate-100 text-slate-600 px-2.5 py-1">Practice</span>{% endif %}</div>{% else %}<p class="text-sm text-slate-500 py-5">Complete a mock interview to enrich this analysis.</p>{% endfor %}
+  </article>
+</section>
+
+<section class="card p-5">
+  <h3 class="font-display font-semibold text-slate-800">Your personalized roadmap</h3>
+  <p class="text-sm text-slate-500 mt-1 mb-5">Learn → Practice → Validate → Add to CV.</p>
+  <div>
+    {% if ai_advice %}
+    <div class="mb-3 flex items-center gap-2"><span class="text-[#673147]">✦</span><h4 class="font-semibold text-[#311432]">AI coach pipeline</h4></div>
+    <div class="ai-pipeline">
+      {% for item in ai_advice %}
+      <article class="ai-pipeline-card">
+        <div class="flex items-center gap-2"><span class="ai-pipeline-index">{{ loop.index }}</span><h5 class="font-semibold text-sm text-[#311432]">{{ item.title }}</h5></div>
+        <div class="ai-pipeline-detail"><b>Why</b><span>{{ item.why }}</span></div>
+        <div class="ai-pipeline-detail"><b>Do</b><span>{{ item.project }}</span></div>
+      </article>
+      {% endfor %}
+    </div>
+    {% elif not ai_enabled %}
+    <div class="text-xs text-slate-500 rounded-xl bg-slate-50 p-3 mb-4">Roadmap based on verified market evidence · AI coaching available from Settings.</div>
+    {% endif %}
+    <div class="roadmap-flow">
+    {% for step in analysis.roadmap %}
+    <article class="roadmap-card">
+      <div class="flex items-start justify-between gap-2"><span class="roadmap-number">{{ loop.index }}</span><span class="text-[10px] px-2 py-1 rounded-full bg-[#E6E6FA] text-[#673147] uppercase tracking-wide">{{ step.priority }}</span></div>
+      <h4 class="font-display font-semibold text-slate-800 mt-3">{{ step.skill }}</h4>
+      <span class="text-xs text-slate-400">{{ step.category }}</span>
+      <div class="demand-track mt-3"><div class="demand-fill" style="width:{{ analysis.missing[loop.index0].demand_percent if loop.index0 < analysis.missing|length else 50 }}%"></div></div>
+      <div class="mt-4 space-y-2"><div class="roadmap-mini-step"><span>1</span>Learn fundamentals</div><div class="roadmap-mini-step"><span>2</span>Build a small project</div><div class="roadmap-mini-step"><span>3</span>Validate and add to CV</div></div>
+    </article>
+    {% else %}<div class="text-sm text-purple-700 bg-purple-50 rounded-xl p-4">✓ No priority gap detected in this market sample.</div>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="card p-5 mt-6"><h3 class="font-semibold">My learning progress</h3><p id="learning-total" class="text-sm text-slate-500 mt-2">{{ analysis.learning_progress.completed }} / {{ analysis.learning_progress.total }} current roadmap actions completed (self-reported).</p></section>
+<section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-6">
+{% for kind,title,steps in [('technical','Technical roadmap',analysis.technical_roadmap),('soft','Soft-skills roadmap',analysis.soft_roadmap)] %}
+<article id="{{ kind }}-roadmap" class="card p-5" style="scroll-margin-top:90px"><h3 class="font-display font-semibold text-slate-800">{{ title }}</h3><p class="text-xs text-slate-500 mt-2">Learn, practice, validate and record your own evidence.</p><div class="space-y-5 mt-4">{% for step in steps %}<section class="border border-slate-200 rounded-xl p-4"><h4 class="font-semibold">{{ step.skill }}</h4>{% if step.skill in ['SQL','Python','Git','Communication'] %}<a class="btn btn-secondary text-xs mt-3" href="{{ url_for('skill_practice',skill=step.skill) }}">Practice {{ step.skill }}</a>{% endif %}<a class="btn btn-secondary text-xs mt-3" href="{{ url_for('portfolio',skill=step.skill,offer_id=analysis.target_offer.id if analysis.target_offer else 0) }}">Build a proof project ↗</a><p class="text-xs text-slate-500 mt-2">{{ step.reason }}</p><div class="flex flex-wrap gap-2 mt-3">{% for resource in step.resources %}<a class="btn btn-secondary text-xs" href="{{ resource.url }}"{% if resource.url.startswith('https://') %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ resource.title }} ↗</a>{% endfor %}</div>{% for task in step.tasks %}<form class="learning-task mt-4 border-t border-slate-100 pt-3" data-skill="{{ step.skill }}" data-index="{{ task.index }}" data-saved-status="{{ task.status }}"><p class="text-sm">{{ loop.index }}. {{ task.text }}</p><label class="block text-xs mt-3">Progress<select name="status" class="w-full border border-slate-200 rounded-lg p-2 mt-1">{% for value,label in [('planned','Planned'),('in_progress','In progress'),('completed','Completed by me')] %}<option value="{{ value }}"{% if value == task.status %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label class="block text-xs mt-3">Evidence or practice notes<textarea name="notes" rows="2" maxlength="1000" class="w-full border border-slate-200 rounded-lg p-2 mt-1">{{ task.notes }}</textarea></label><button type="submit" class="btn btn-primary text-xs mt-2">Save learning progress</button><p class="learning-status text-xs mt-2" role="status" aria-live="polite"></p></form>{% endfor %}</section>{% else %}<p class="text-sm text-slate-500">No priority {{ kind }} gap detected in the selected evidence.</p>{% endfor %}</div></article>
+{% endfor %}</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.learning-task').forEach(form=>form.addEventListener('submit',async event=>{event.preventDefault();const button=form.querySelector('button');const status=form.querySelector('.learning-status');button.disabled=true;status.textContent='Saving…';try{const response=await fetch('/api/skill-gap/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skill:form.dataset.skill,action_index:Number(form.dataset.index),status:form.elements.status.value,notes:form.elements.notes.value})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Unable to save progress.');status.textContent=data.message;form.dataset.savedStatus=form.elements.status.value;const forms=[...document.querySelectorAll('.learning-task')];document.getElementById('learning-total').textContent=`${forms.filter(item=>item.dataset.savedStatus==='completed').length} / ${forms.length} current roadmap actions completed (self-reported).`}catch(error){status.textContent=error.message}finally{button.disabled=false}}));
+</script>
+{% if analysis.has_cv_evidence %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+(() => {
+  if (typeof Chart === "undefined") { document.querySelectorAll(".chart-fallback").forEach(el => el.classList.remove("hidden")); document.querySelectorAll("canvas").forEach(el => el.classList.add("hidden")); return; }
+  const skills = {{ analysis.skills|tojson }};
+  const shared = {responsive:true,maintainAspectRatio:false,animation:{duration:800,easing:"easeOutQuart"},plugins:{legend:{labels:{usePointStyle:true}},tooltip:{backgroundColor:"#311432",padding:12}}};
+  new Chart(document.getElementById("coverage-chart"), {type:"doughnut",data:{labels:["Documented","Missing"],datasets:[{data:[{{ analysis.documented_count }},{{ analysis.missing_count }}],backgroundColor:["#673147","#D8C7D8"],borderWidth:0,hoverOffset:8}]},options:{...shared,cutout:"68%"}});
+  const demanded = skills.filter(item => item.demand_count > 0).slice(0,10);
+  new Chart(document.getElementById("demand-chart"), {type:"bar",data:{labels:demanded.map(item=>item.name),datasets:[{label:"Market records",data:demanded.map(item=>item.demand_count),backgroundColor:demanded.map(item=>item.documented?"#673147":"#A18F93"),borderRadius:7,borderSkipped:false}]},options:{...shared,indexAxis:"y",scales:{x:{beginAtZero:true,ticks:{precision:0},grid:{color:"#F1EDF0"}},y:{grid:{display:false}}}}});
+})();
+</script>
+{% endif %}
+{% endblock %}

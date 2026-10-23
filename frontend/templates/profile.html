@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Profile — TalentSouk{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/account_pages.css',v='20261023-account-redesign') }}"><link rel="stylesheet" href="{{ url_for('static',filename='css/account_workspace.css',v='20261023-account-redesign') }}">{% endblock %}
+{% block content %}
+<section class="account-workspace" aria-labelledby="profile-page-title">
+<header class="account-workspace-header"><div><span class="account-tag">YOUR PROFESSIONAL STORY</span><h1 id="profile-page-title">Profile</h1><p>Keep your information current to improve your recommendations.</p></div><a class="btn btn-secondary" href="{{ url_for('portfolio') }}">View portfolio ↗</a></header>
+<div class="profile-workspace-grid">
+<aside class="profile-summary-card">
+<div class="profile-photo-wrap"><img class="profile-avatar" src="{{ current_user.avatar_url }}" alt="Profile avatar of {{ profile.full_name }}">
+<form method="post" action="{{ url_for('profile_photo_update') }}" enctype="multipart/form-data"><label class="profile-photo-edit" title="Change profile photo"><span aria-hidden="true">✎</span><span class="sr-only">Change profile photo</span><input class="sr-only" type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp" required onchange="this.form.requestSubmit()"></label></form></div>
+<h2>{{ profile.full_name or 'Candidate' }}</h2><p class="profile-role">{{ profile.target_position or 'Add your professional title' }}</p><p class="profile-location">{{ profile.location or 'Add your location' }}</p>
+{% set completion=namespace(filled=0) %}{% set fields=['full_name','email','phone','location','summary','skills','experience','education','target_position','linkedin'] %}{% for field in fields %}{% if profile.get(field) %}{% set completion.filled=completion.filled+1 %}{% endif %}{% endfor %}{% set strength=completion.filled*10 %}
+<div class="profile-strength"><div><strong>Profile strength</strong><strong>{{ strength }}%</strong></div><progress value="{{ strength }}" max="100" aria-label="Profile completeness">{{ strength }}%</progress><p>{{ 'Your core profile details are complete.' if strength==100 else 'Add your experience, skills and links to strengthen your profile.' }}</p></div>
+<nav class="profile-quick-links" aria-label="Profile resources"><a href="{{ url_for('cv_builder') }}#cv-portrait-studio"><span>✧ &nbsp; Create a professional portrait</span><span>›</span></a><a href="{{ url_for('cv_view') if cv else url_for('cv_builder') }}"> <span>▤ &nbsp; {{ 'View CV' if cv else 'Create or upload CV' }}</span><span>›</span></a><a href="{{ url_for('applications') }}"><span>▣ &nbsp; My applications</span><span>›</span></a><a href="{{ url_for('ai_studio',tab='recommendations') }}"><span>✧ &nbsp; Find my opportunities</span><span>›</span></a></nav>
+{% if cv %}<div class="profile-cv-file"><p class="account-eyebrow">CURRENT CV</p><p>{{ cv.original_filename }}</p><a href="{{ url_for('cv_download') }}">Download CV ↓</a></div>{% endif %}
+<a class="profile-appearance-link" href="#profile-appearance">Customize avatar & theme →</a><p class="profile-photo-help">Photo: JPG, PNG or WebP · up to 2 MB</p>
+</aside>
+<section id="profile-editor" class="profile-details-card" aria-label="Edit your profile">
+<form id="profile-details-form" method="post" action="{{ url_for('profile_update') }}" enctype="multipart/form-data" class="profile-inline-form">
+    <div class="account-panel-heading"><div><p class="account-eyebrow">PERSONAL INFORMATION</p><h2>Your details</h2></div><button id="edit-profile-button" class="account-edit" type="button">Edit <span aria-hidden="true">↗</span></button></div>
+    <div class="account-form-grid">
+      <label class="account-field">Full name<input name="full_name" value="{{ profile.full_name }}" maxlength="150" required></label>
+      <label class="account-field">Professional title<input name="target_position" value="{{ profile.target_position }}" maxlength="500"></label>
+      <label class="account-field">Email<input type="email" name="email" value="{{ profile.email }}" maxlength="254" required></label>
+      <label class="account-field">Phone<input name="phone" value="{{ profile.phone }}" maxlength="60"></label>
+      <label class="account-field">Location<input name="location" value="{{ profile.location }}" maxlength="120"></label>
+      
+      
+    </div>
+    <label class="account-field">Professional summary<textarea name="summary" rows="3" maxlength="4000">{{ profile.summary }}</textarea></label>
+    <details class="account-detail-group"><summary>Career goals & professional links <span aria-hidden="true">+</span></summary><div class="account-detail-content"><div class="account-form-grid"><label class="account-field">LinkedIn profile URL<input type="url" name="linkedin" value="{{ profile.linkedin }}" maxlength="300" placeholder="https://linkedin.com/in/your-name"></label><label class="account-field">GitHub profile URL<input type="url" name="github" value="{{ profile.github }}" maxlength="300" placeholder="https://github.com/your-name"></label></div>
+    <label class="account-field">Career objective<textarea name="career_objective" rows="3" maxlength="4000">{{ profile.career_objective }}</textarea></label>
+    
+    <fieldset class="rounded-xl border border-slate-200 p-4"><legend class="px-2 font-semibold text-slate-700">Career Goals</legend><div class="account-form-grid"><label class="account-field">Career goal<select name="career_goal"><option value="">Not selected</option>{% for value, label in career_goals.items() %}<option value="{{ value }}" {{ 'selected' if profile.career_goal == value }}>{{ label }}</option>{% endfor %}</select></label><label class="account-field">Career field<input name="career_field" list="career-domain-options" value="{{ profile.career_field }}" maxlength="500"></label><label class="account-field">Target location<input name="target_location" value="{{ profile.target_location }}" maxlength="500"></label><label class="account-field">Education level<select name="education_level"><option value="">Not selected</option>{% for value, label in education_levels.items() %}<option value="{{ value }}" {{ 'selected' if profile.education_level == value }}>{{ label }}</option>{% endfor %}</select></label><label class="account-field">Experience level<select name="experience_level"><option value="">Not selected</option>{% for value, label in experience_levels.items() %}<option value="{{ value }}" {{ 'selected' if profile.experience_level == value }}>{{ label }}</option>{% endfor %}</select></label></div><div class="mt-4"><p class="mb-2 text-xs font-semibold text-slate-600">Target skills</p>{% set saved_skills = profile.target_skills.split(',') | map('trim') | list %}<div class="profile-skill-options">{% for skill in target_skill_options %}<label><input type="checkbox" name="target_skills_selected" value="{{ skill }}" {{ 'checked' if skill in saved_skills }}> {{ skill }}</label>{% endfor %}</div><label class="account-field mt-3">Other skills<input name="target_skills" maxlength="500" placeholder="Add other skills, separated by commas"></label></div></fieldset>
+    <datalist id="career-domain-options"><option value="Génie civil"><option value="Construction / BTP"></datalist>
+    <input id="saved-target-skills" type="hidden" name="target_skills" value="{{ profile.target_skills }}">
+    </div></details><details class="account-detail-group"><summary>Experience, skills & education <span aria-hidden="true">+</span></summary><div class="account-detail-content">
+    <label class="account-field">Education<textarea name="education" rows="3" maxlength="10000">{{ profile.education }}</textarea></label>
+    <label class="account-field">Skills<textarea name="skills" rows="3" maxlength="5000">{{ profile.skills }}</textarea></label>
+    <label class="account-field">Languages<textarea name="languages" rows="2" maxlength="2000">{{ profile.languages }}</textarea></label>
+    <label class="account-field">Experience<textarea name="experience" rows="4" maxlength="12000">{{ profile.experience }}</textarea></label>
+    <label class="account-field">Projects<textarea name="projects" rows="3" maxlength="10000">{{ profile.projects }}</textarea></label>
+    <label class="account-field">Certifications<textarea name="certifications" rows="2" maxlength="5000">{{ profile.certifications }}</textarea></label>
+    </div></details><div class="profile-dialog-actions">
+      <button id="cancel-profile-editor" class="btn btn-ghost" type="reset">Cancel</button>
+      <button id="save-profile-button" class="btn btn-primary" type="submit">Save changes</button>
+    </div>
+  </form>
+</section></div><section id="profile-appearance" class="profile-details-card profile-appearance-section" aria-label="Avatar and appearance">{% set appearance_destination='profile' %}{% include 'components/appearance_picker.html' %}</section></section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static',filename='js/account_pages.js',v='20261023-account-redesign') }}" defer></script>{% endblock %}

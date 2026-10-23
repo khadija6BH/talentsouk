@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Company Map — TalentSouk{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  #companies-map { height: min(68vh, 720px); min-height: 340px; width: 100%; border-radius: 0.75rem; z-index: 0; }
+  .map-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:1rem;align-items:start}
+  .category-chart-card{position:relative;overflow:hidden}.category-chart-wrap{height:230px;position:relative;filter:drop-shadow(0 14px 12px rgba(49,20,50,.18))}
+  .category-chart-wrap canvas{transform:perspective(650px) rotateX(12deg);transform-origin:center center}
+  .category-total{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none;transform:translateY(4px)}
+  .category-total strong{font:800 1.7rem Manrope, sans-serif;color:#311432}.category-total span{font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em}
+  .category-legend{max-height:185px;overflow:auto}.category-legend-row{display:grid;grid-template-columns:9px 1fr auto;align-items:center;gap:.5rem;font-size:.72rem;padding:.35rem 0;border-bottom:1px solid #f3eef2}
+  .category-dot{width:9px;height:9px;border-radius:50%}
+  @media (max-width: 640px) {
+    #companies-map { height: 58vh; min-height: 300px; }
+  }
+  @media(max-width:1050px){.map-layout{grid-template-columns:1fr}.category-chart-card{max-width:520px;width:100%}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div>
+    <h1 class="font-display font-bold text-2xl text-slate-800">Company Map</h1>
+    <p class="mt-1 text-sm text-slate-500">Company locations across Marrakech.</p>
+  </div>
+  <a href="{{ url_for('companies') }}" class="btn btn-secondary text-xs">Back to companies</a>
+</div>
+
+<div class="map-layout">
+  <section class="card p-2" aria-label="Map of companies in Marrakech"><div id="companies-map"></div><p id="map-library-fallback" class="hidden p-8 text-center text-sm text-slate-500">The map library could not load. Company category statistics remain available.</p></section>
+  <aside class="card category-chart-card p-4" aria-labelledby="category-chart-title">
+    <h2 id="category-chart-title" class="font-display font-semibold text-slate-800">Company categories</h2>
+    <p class="text-xs text-slate-500 mt-1">Real database distribution</p>
+    <div class="category-chart-wrap mt-2"><canvas id="category-pie-chart"></canvas><div class="category-total"><strong id="category-total">{{ company_total }}</strong><span>Total companies</span></div><p id="category-chart-fallback" class="hidden text-sm text-slate-500 text-center pt-20">Chart unavailable. Category totals remain listed below.</p></div>
+    <div id="category-chart-legend" class="category-legend mt-2">{% set palette=['#311432','#673147','#A18F93','#D8C7D8','#E6E6FA'] %}{% for category, count in category_stats %}<div class="category-legend-row"><span class="category-dot" style="background:{{ palette[loop.index0 % 5] }}"></span><span class="text-slate-600">{{ category }}</span><strong class="text-slate-700">{{ count }}</strong></div>{% endfor %}</div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+  const COMPANIES = {{ companies|tojson }};
+  const CATEGORY_COLORS = {
+    "IT": "#673147", "AI / Data": "#D8C7D8", "Finance": "#A18F93",
+    "Marketing": "#673147", "Engineering": "#A18F93", "Tourism": "#673147",
+    "Education": "#D8C7D8", "Healthcare": "#673147", "Logistics": "#A18F93",
+    "Other": "#A18F93",
+  };
+  if (typeof L !== "undefined") {
+  const map = L.map("companies-map", { scrollWheelZoom: false }).setView([31.635, -8.005], 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+    maxZoom: 18,
+  }).addTo(map);
+
+  const bounds = [];
+  COMPANIES.forEach((company) => {
+    const position = [company.lat, company.lng];
+    bounds.push(position);
+    const marker = L.circleMarker(position, {
+      radius: 8,
+      color: "#fff",
+      weight: 2,
+      fillColor: CATEGORY_COLORS[company.category] || "#A18F93",
+      fillOpacity: 0.9,
+    }).addTo(map);
+    const popup = document.createElement("div");
+    const name = document.createElement("strong");
+    name.textContent = company.name;
+    const details = document.createElement("div");
+    details.textContent = `${company.category} · ${company.area}`;
+    const link = document.createElement("a");
+    link.href = `/companies/${company.id}`;
+    link.textContent = "View company";
+    link.className = "text-blue-600";
+    popup.append(name, details, link);
+    marker.bindPopup(popup);
+  });
+
+  if (bounds.length) map.fitBounds(bounds, { padding: [24, 24] });
+  } else {
+    document.getElementById("companies-map").classList.add("hidden");
+    document.getElementById("map-library-fallback").classList.remove("hidden");
+  }
+
+  const categoryEntries = {{ category_stats|tojson }};
+  const mauvePalette = ["#311432", "#673147", "#A18F93", "#D8C7D8", "#E6E6FA"];
+  if (typeof Chart !== "undefined" && categoryEntries.length) {
+    const depthPlugin = {id:"mauveDepth",beforeDatasetDraw(chart){const {ctx}=chart;ctx.save();ctx.shadowColor="rgba(49,20,50,.38)";ctx.shadowBlur=14;ctx.shadowOffsetY=10;},afterDatasetDraw(chart){chart.ctx.restore();}};
+    new Chart(document.getElementById("category-pie-chart"), {
+      type:"doughnut",
+      data:{labels:categoryEntries.map(item=>item[0]),datasets:[{data:categoryEntries.map(item=>item[1]),backgroundColor:categoryEntries.map((_item,index)=>mauvePalette[index%mauvePalette.length]),borderColor:"#fff",borderWidth:2,hoverOffset:10}]},
+      plugins:[depthPlugin],
+      options:{responsive:true,maintainAspectRatio:false,cutout:"54%",rotation:-70,circumference:360,animation:{duration:1200,easing:"easeOutQuart",animateRotate:true,animateScale:true},plugins:{legend:{display:false},tooltip:{backgroundColor:"#311432",padding:10,callbacks:{label(context){const total=COMPANIES.length||1;return ` ${context.label}: ${context.raw} (${Math.round(context.raw/total*100)}%)`;}}}}}
+    });
+  } else {
+    document.getElementById("category-pie-chart").classList.add("hidden");
+    document.getElementById("category-chart-fallback").classList.remove("hidden");
+  }
+</script>
+{% endblock %}

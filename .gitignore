@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+database.db
+.env
+uploads/
+.runtime-deps/
+.runtime-logs/
+backups/
+
+deployment/
+.railway/
+

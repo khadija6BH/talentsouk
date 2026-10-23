@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Optimized CV — TalentSouk</title>
+  <style>
+    :root{--accent:{{ optimized.profile.accent_color or '#673147' }}}
+    *{box-sizing:border-box}body{margin:0;background:#eee9ee;color:#1f2937;font:14px/1.45 Arial,sans-serif}.toolbar{position:sticky;top:0;display:flex;justify-content:center;gap:10px;padding:12px;background:#311432}.toolbar button{border:0;border-radius:8px;padding:10px 18px;background:#fff;color:#311432;font-weight:700;cursor:pointer}.page{width:210mm;min-height:297mm;margin:18px auto;padding:18mm;background:#fff;box-shadow:0 8px 30px #31143222}h1{margin:0;color:var(--accent);font-size:30px}h2{margin:18px 0 7px;border-bottom:1px solid #ddd;padding-bottom:4px;color:var(--accent);font-size:14px;text-transform:uppercase;letter-spacing:.08em}.contact{margin-top:6px;color:#64748b}.content{white-space:pre-wrap}.target{margin:10px 0;padding:8px 10px;background:#f6f0f6;border-left:3px solid var(--accent);font-size:12px}@page{size:A4;margin:0}@media print{body{background:#fff}.toolbar{display:none}.page{margin:0;box-shadow:none;width:210mm;min-height:297mm}}
+  </style>
+</head>
+<body>
+  <div class="toolbar">{% include 'components/back_button.html' %}<button type="button" onclick="window.print()">Save as PDF</button><button type="button" onclick="window.close()">Close</button></div>
+  {% set p = optimized.profile %}
+  <main class="page">
+    <h1>{{ p.full_name or 'Candidate' }}</h1>
+    <div class="contact">{{ [p.email, p.phone, p.location, p.linkedin, p.github]|select|join(' · ') }}</div>
+    <div class="target">Tailored for {{ optimized.offer_title }} at {{ optimized.company_name }} · ATS score {{ optimized.ats_score_after }}%</div>
+    {% if optimized.suggested_summary or p.summary %}<h2>Professional Summary</h2><div class="content">{{ optimized.suggested_summary or p.summary }}</div>{% endif %}
+    {% for key, label in [('skills','Skills'),('experience','Experience'),('education','Education'),('projects','Projects'),('certifications','Certifications'),('languages','Languages')] %}
+      {% if p[key] %}<h2>{{ label }}</h2><div class="content">{{ p[key] }}</div>{% endif %}
+    {% endfor %}
+  </main>
+<script src="{{ url_for('static',filename='js/back_navigation.js',v='20261014-back') }}"></script></body>
+</html>

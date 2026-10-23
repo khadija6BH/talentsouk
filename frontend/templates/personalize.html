@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Make it yours — TalentSouk{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='css/account_workspace.css',v='20261023-appearance') }}">{% endblock %}
+{% block content %}<section class="account-workspace"><header class="account-workspace-header"><div><span class="account-tag">YOUR PROFILE IS READY</span><h1>Make it yours.</h1><p>One final, optional touch before you explore your next opportunity.</p></div></header><section class="profile-details-card">{% set appearance_destination='tutorial_intro' %}{% include 'components/appearance_picker.html' %}</section></section>{% endblock %}

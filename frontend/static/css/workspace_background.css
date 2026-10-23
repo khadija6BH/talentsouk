@@ -1,0 +1,20 @@
+/* The supplied artwork belongs only to these three workspaces. */
+body:is([data-page="dashboard"],[data-page="profile"],[data-page="settings"]) #app-content {
+  background-color: #fcf9f7;
+  background-image: url('../images/workspace-moroccan-background.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+body:is([data-page="dashboard"],[data-page="profile"],[data-page="settings"]) .app-main {
+  background: transparent;
+}
+@media (max-width: 767px) {
+  body:is([data-page="dashboard"],[data-page="profile"],[data-page="settings"]) #app-content {
+    background-attachment: scroll;
+    background-size: auto 100vh;
+    background-position: center top;
+    background-repeat: repeat-y;
+  }
+}

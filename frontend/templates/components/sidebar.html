@@ -1,0 +1,91 @@
+{# Reusable sidebar. Expects `active_page` in the template context to highlight the current section. #}
+<aside id="sidebar"
+       role="dialog" aria-modal="true" aria-label="Main menu" aria-hidden="true" inert
+       class="sidebar-hidden fixed z-40 inset-y-0 left-0 w-64 bg-white border-r border-slate-100 flex flex-col">
+
+  <!-- Brand -->
+  <div class="h-16 flex items-center justify-between px-5 border-b border-slate-100">
+    <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2.5">
+      <img src="{{ url_for('static', filename='images/talentsouk-logo.png') }}"
+           alt="TalentSouk logo" width="32" height="32" class="h-8 w-8 object-contain">
+      <span class="font-display font-bold text-[15px] leading-tight text-slate-800">
+        TalentSouk
+      </span>
+    </a>
+    <button id="sidebar-close-btn" type="button" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Close menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-6">
+    <div class="space-y-1">
+      <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Overview</p>
+      <a href="{{ url_for('dashboard') }}" class="nav-link {{ 'active' if active_page == 'dashboard' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Dashboard
+      </a>
+    </div>
+
+    <div class="space-y-1">
+      <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Job Search</p>
+      <a href="{{ url_for('companies') }}" class="nav-link {{ 'active' if active_page == 'companies' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M6 21V7l6-4 6 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/></svg>
+        Companies
+      </a>
+      
+      <a href="{{ url_for('opportunity_radar') }}" class="nav-link {{ 'active' if active_page == 'opportunity_radar' }}"><span aria-hidden="true">◎</span> Job offers</a>
+      
+      <a href="{{ url_for('applications') }}" class="nav-link {{ 'active' if request.endpoint == 'applications' }}"><span aria-hidden="true">▥</span> Applications</a>
+      <a href="{{ url_for('crm') }}" class="nav-link {{ 'active' if active_page in ['crm', 'career_copilot'] and request.endpoint != 'applications' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-3.87 3.13-7 7-7s7 3.13 7 7"/></svg>
+        CRM / Follow-ups
+      </a>
+    </div>
+
+    <div class="space-y-1">
+      <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Tools</p>
+      
+      
+      
+      <a href="{{ url_for('cv_builder') }}" class="nav-link {{ 'active' if active_page == 'cv_builder' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8l-4-5Z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></svg>
+        CV Builder
+      </a>
+      <a href="{{ url_for('portfolio') }}" class="nav-link {{ 'active' if active_page == 'portfolio' }}"><span aria-hidden="true">◇</span> Portfolio Studio</a>
+      <a href="{{ url_for('ai_studio') }}" class="nav-link {{ 'active' if active_page == 'ai_studio' }}"><span aria-hidden="true">✧</span> AI Studio</a>
+      <a href="{{ url_for('interview_helper') }}" class="nav-link {{ 'active' if active_page == 'interview_helper' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 10h8M8 14h5"/><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6l-4 3v-3H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg>
+        AI Interview Simulator
+      </a>
+    </div>
+
+    <div class="space-y-1">
+      <p class="px-3 mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Account</p>
+      <a href="{{ url_for('profile') }}" class="nav-link {{ 'active' if active_page == 'profile' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.42 3.58-8 8-8s8 3.58 8 8"/></svg>
+        Profile
+      </a>
+      <a href="{{ url_for('settings') }}" class="nav-link {{ 'active' if active_page == 'settings' }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        Settings
+      </a>
+      <a href="{{ url_for('logout') }}" class="nav-link text-purple-500 hover:bg-purple-50 hover:text-purple-600">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- Footer / upgrade card -->
+  <div class="p-4 border-t border-slate-100">
+    <div class="sidebar-upgrade rounded-xl p-4">
+      <p class="text-sm font-semibold text-slate-800">TalentSouk Pro</p>
+      <p class="text-xs text-slate-500 mt-1 mb-3">Unlock unlimited CV rewrites and AI interview prep.</p>
+      <button id="upgrade-plan-btn" class="btn btn-primary w-full text-xs py-2" type="button">Upgrade plan</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Mobile backdrop -->
+<div id="sidebar-backdrop" class="hidden opacity-0 fixed inset-0 z-30 bg-slate-900/30"></div>

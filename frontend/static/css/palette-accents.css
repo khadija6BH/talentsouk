@@ -1,0 +1,61 @@
+/* Gentle accents shared by all document shells; chart colours stay owned by charts. */
+:root{--accent-cream:#F5EFC6;--accent-blue:#A5BCD6;--accent-red:#4D0E12;--accent-soil:#4A2E27;--accent-java:#231815}
+body{--focus-accent:#A5BCD6}
+::selection{background:#F5EFC6;color:#231815}
+:where(input:not([type=checkbox]):not([type=radio]),textarea,select):focus-visible{outline:2px solid #A5BCD6;outline-offset:2px}
+:where(.btn-primary,.landing-button:not(.secondary)):hover{box-shadow:0 7px 18px #4A2E2726}
+.sidebar-upgrade{background:linear-gradient(135deg,#F5EFC680,#E6E6FA)}
+#sidebar .nav-link.active{box-shadow:inset 3px 0 0 #A5BCD6}
+[dir=rtl] #sidebar .nav-link.active{box-shadow:inset -3px 0 0 #A5BCD6}
+.app-topbar{border-bottom-color:#A5BCD64d}
+.app-topbar #language-selector,.auth-language{border-color:#A5BCD680}
+.auth-page{background:linear-gradient(135deg,#E6E6FA,#A5BCD624 55%,#F5EFC62b)}
+.auth-login-page .auth-souk-visual{background:radial-gradient(ellipse at 90% 100%,#4A2E2780,transparent 55%),linear-gradient(135deg,#311432,#673147)}
+.auth-login-page .auth-kicker{color:#F5EFC6}
+.auth-login-page .souk-feature-row span:nth-child(2){border-color:#A5BCD680;background:#A5BCD61c}
+.auth-login-page .souk-lantern span{box-shadow:0 0 26px #F5EFC650}
+.auth-page .logo-auth-card input:not([type=checkbox]){border-color:#A5BCD65c;background:#A5BCD60e}
+.auth-page .logo-auth-card .btn-primary{background:linear-gradient(110deg,#673147,#4D0E12);color:#fff}
+.auth-page .logo-auth-card h1{color:#4A2E27}
+.auth-register-page .auth-panel{padding-block:55px}
+.landing .hero-note{display:table;background:#F5EFC680;color:#4A2E27;padding:5px 10px;border-radius:20px}
+.landing .feature-card:nth-child(2) .feature-index{color:#4D0E12}
+.landing .workflow .feature-icon{background:#A5BCD64d;color:#4A2E27}
+.landing .company-preview .preview-stamp{color:#4A2E27;background:#F5EFC673;display:table;padding:4px 10px;border-radius:8px}
+.landing .landing-slideshow{box-shadow:0 18px 55px #4A2E271c,5px 6px 0 #A5BCD64d}
+.dashboard-actions .start-card:nth-child(2) .start-card-icon{background:#F5EFC6;color:#4A2E27}
+.dashboard-actions .start-card:nth-child(3) .start-card-icon{background:#A5BCD64d;color:#311432}
+:where(.crm-tabs,.crm-workspace-tabs) a:focus-visible{outline-color:#A5BCD6}
+@media(max-width:767px){.auth-register-page .auth-panel{padding-block:25px}}
+
+.app-back-button{background:#F5EFC6;border-color:#e3dcae;color:#4A2E27}.app-back-button:hover{background:#eee5ab}
+.btn-secondary{background:#A5BCD61a;border-color:#A5BCD680}.btn-secondary:hover{background:#A5BCD638}
+/* Page identities drawn from the two TalentSouk palettes. */
+body[data-page]{--page-ink:#311432;--page-action:#673147;--page-soft:#E6E6FA;--page-wash:#f8f6fa;--page-line:#D8C7D8;--color-brand:var(--page-action);--color-ink:var(--page-ink);background:var(--page-wash)!important;color:var(--page-ink)}
+body[data-page=dashboard]{--page-action:#4A2E27;--page-ink:#231815;--page-soft:#F5EFC6;--page-wash:#fcfaf1;--page-line:#e2dcb9}
+body[data-page=companies]{--page-action:#4A2E27;--page-ink:#231815;--page-soft:#A5BCD6;--page-wash:#f1f5f9;--page-line:#c8d5e3}
+body[data-page=opportunity_radar]{--page-action:#4D0E12;--page-ink:#4D0E12;--page-soft:#F5EFC6;--page-wash:#fbf8ef;--page-line:#e4d5c1}
+body[data-page=cv_builder]{--page-action:#673147;--page-ink:#311432;--page-soft:#E6E6FA;--page-wash:#f8f6fa;--page-line:#D8C7D8}
+body[data-page=crm]{--page-action:#4A2E27;--page-ink:#231815;--page-soft:#D8C7D8;--page-wash:#f7f2f0;--page-line:#dfd2ce}
+body[data-page=postulations]{--page-action:#4D0E12;--page-ink:#231815;--page-soft:#A5BCD6;--page-wash:#f5f7fa;--page-line:#c8d5e3}
+body[data-page=ai_studio]{--page-action:#311432;--page-soft:#D8C7D8;--page-wash:#f5f0f6;--page-line:#d9cbdc}
+body[data-page=interview_helper]{--page-action:#4A2E27;--page-ink:#231815;--page-soft:#A5BCD6;--page-wash:#edf2f7;--page-line:#bdcfe1}
+body[data-page=portfolio]{--page-action:#4D0E12;--page-ink:#4A2E27;--page-soft:#F5EFC6;--page-wash:#fffaf0;--page-line:#e5d9bf}
+body[data-page=career_copilot]{--page-action:#673147;--page-soft:#F5EFC6;--page-wash:#faf8f0;--page-line:#e5dfc7}
+body[data-page=profile]{--page-action:#673147;--page-soft:#D8C7D8;--page-wash:#faf5f8;--page-line:#e5d4df}
+body[data-page=settings]{--page-action:#4A2E27;--page-ink:#231815;--page-soft:#A5BCD6;--page-wash:#f5f5f3;--page-line:#d4d9dc}
+body[data-page] .app-topbar{border-bottom:2px solid var(--page-soft);background:#ffffffed}
+body[data-page] .app-main .btn-primary{background:var(--page-action);border-color:var(--page-action);color:#fff}
+body[data-page] .btn-secondary{background:#fff;border-color:var(--page-line);color:var(--page-ink);box-shadow:none}
+body[data-page] .btn-secondary:hover{background:var(--page-wash);border-color:var(--page-action)}
+body[data-page] .btn-ghost{background:transparent;box-shadow:none;color:var(--page-action)}
+body[data-page] .app-main .card{border-color:var(--page-line)}
+body[data-page] #sidebar .nav-link.active{background:var(--page-soft);color:var(--page-ink);box-shadow:inset 3px 0 0 var(--page-action)}
+[dir=rtl] body[data-page] #sidebar .nav-link.active{box-shadow:inset -3px 0 0 var(--page-action)}
+body[data-page] :is(.workspace-hero,.journey-hero,.copilot-hero){background:linear-gradient(115deg,var(--page-wash),var(--page-soft))!important;border-color:var(--page-line);color:var(--page-ink)}
+body[data-page] :is(.workspace-hero,.journey-hero,.copilot-hero) :is(h1,h2,p,em){color:var(--page-ink)!important}
+body[data-page] .journey-button.primary{background:var(--page-action);color:white;border-color:var(--page-action)}
+body[data-page] .app-back-button{background:transparent;border-color:var(--page-line);color:var(--page-action);box-shadow:none}
+body[data-page] :is(input,textarea,select):focus-visible{outline-color:var(--page-action)}
+body[data-page] :is(.radar-search-panel,.settings-header,.profile-header,.portfolio-hero,.studio-hero){border-top:3px solid var(--page-soft)}
+@media(prefers-reduced-motion:reduce){body[data-page] *{scroll-behavior:auto!important}}
