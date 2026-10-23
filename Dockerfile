@@ -9,5 +9,6 @@ COPY scripts ./scripts
 COPY data/entreprises_Marrakech_FINAL.csv ./data/entreprises_Marrakech_FINAL.csv
 COPY offres_jooble.csv ./offres_jooble.csv
 COPY gunicorn.conf.py ./
-ENV STORAGE_ROOT=/data SESSION_COOKIE_SECURE=1 FLASK_DEBUG=0
+ENV STORAGE_ROOT=/data SESSION_COOKIE_SECURE=1 FLASK_DEBUG=0 PORT=8080
+EXPOSE 8080
 CMD ["gunicorn", "--config", "gunicorn.conf.py", "backend.app:app"]
