@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "flask",
+  "buildCommand": "python vercel_build.py",
+  "regions": ["cdg1"],
+  "functions": {
+    "app.py": {
+      "excludeFiles": "{backend/tests/**,backend/legacy/**,**/__pycache__/**,**/*.pyc,backups/**,deployment/**,uploads/**,data/backups/**,data/offer_cleaning/**}"
+    }
+  }
+}

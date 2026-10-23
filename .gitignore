@@ -10,3 +10,7 @@ backups/
 deployment/
 .railway/
 
+# Generated Vercel CDN assets and local project settings.
+public/
+.vercel/
+
