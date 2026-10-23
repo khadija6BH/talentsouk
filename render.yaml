@@ -24,5 +24,19 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
-      - key: APP_BASE_URL
+      - key: UPLOAD_STORAGE
+        value: supabase
+      - key: SUPABASE_URL
+        value: https://jmmwqrqbmxybjmqnundd.supabase.co
+      - key: SUPABASE_STORAGE_BUCKET
+        value: talentsouk-private
+      - key: SUPABASE_STORAGE_KEY
         sync: false
+      - key: EMAIL_PROVIDER
+        value: brevo
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: RADAR_AUTO_SYNC
+        value: "0"

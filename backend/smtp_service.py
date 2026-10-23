@@ -17,7 +17,7 @@ def _settings():
     return {
         "host": os.environ.get("SMTP_HOST", "").strip(),
         "port": os.environ.get("SMTP_PORT", "").strip(),
-        "user": os.environ.get("SMTP_USER", "").strip(),
+        "user": (os.environ.get("BREVO_SENDER_EMAIL", "") if os.environ.get("EMAIL_PROVIDER") == "brevo" else os.environ.get("SMTP_USER", "")).strip(),
         "password": os.environ.get("SMTP_PASSWORD", ""),
         "from_name": os.environ.get("SMTP_FROM_NAME", "").strip(),
         "use_tls": os.environ.get("SMTP_USE_TLS", "true").strip().casefold(),
@@ -26,6 +26,8 @@ def _settings():
 
 def smtp_configured():
     settings = _settings()
+    if os.environ.get('EMAIL_PROVIDER') == 'brevo':
+        return bool(os.environ.get('BREVO_API_KEY', '').strip() and settings['user'] and settings['from_name'])
     try:
         port = int(settings["port"])
     except (TypeError, ValueError):
@@ -37,6 +39,8 @@ def smtp_configured():
 
 
 def _deliver(message):
+    if os.environ.get('EMAIL_PROVIDER') == 'brevo':
+        return _deliver_brevo(message)
     settings = _settings()
     port = int(settings["port"])
     context = ssl.create_default_context()
@@ -50,6 +54,47 @@ def _deliver(message):
                 server.starttls(context=context)
             server.login(settings["user"], settings["password"])
             server.send_message(message)
+
+
+def _deliver_brevo(message):
+    """HTTPS delivery for hosts whose free plan blocks SMTP; never silently fall back."""
+    import base64
+    import json
+    from email.utils import getaddresses, parseaddr
+    from urllib import request, error
+    sender_name, sender_email = parseaddr(message['From'])
+    payload = {'sender': {'email': sender_email, 'name': sender_name or 'TalentSouk'},
+               'subject': str(message['Subject']),
+               'to': [{'email': address} for _, address in getaddresses(message.get_all('To', []))]}
+    for header, name in [('Cc', 'cc'), ('Bcc', 'bcc')]:
+        recipients = [{'email': address} for _, address in getaddresses(message.get_all(header, []))]
+        if recipients:
+            payload[name] = recipients
+    if message.get('Reply-To'):
+        name, email = parseaddr(message['Reply-To'])
+        payload['replyTo'] = {'email': email, 'name': name or email}
+    for subtype, key in [('plain', 'textContent'), ('html', 'htmlContent')]:
+        body = message.get_body(preferencelist=(subtype,))
+        if body:
+            payload[key] = body.get_content()
+    attachments = [{'name': part.get_filename() or 'attachment',
+                    'content': base64.b64encode(part.get_payload(decode=True)).decode('ascii')}
+                   for part in message.iter_attachments() if part.get_filename()]
+    if attachments:
+        payload['attachment'] = attachments
+    req = request.Request('https://api.brevo.com/v3/smtp/email', data=json.dumps(payload).encode(),
+                          headers={'Content-Type': 'application/json',
+                                   'api-key': os.environ.get('BREVO_API_KEY', '').strip()}, method='POST')
+    try:
+        with request.urlopen(req, timeout=30) as response:
+            result = json.loads(response.read(8192))
+        if not result.get('messageId'):
+            raise smtplib.SMTPException('The email provider did not confirm delivery acceptance.')
+        message.replace_header('Message-ID', result['messageId'])
+    except error.HTTPError as exc:
+        raise smtplib.SMTPException('Email provider rejected the request (HTTP %s). Check sender verification and email quota.' % exc.code) from None
+    except (error.URLError, TimeoutError, ValueError):
+        raise smtplib.SMTPException('The email provider could not be reached or returned an invalid response.') from None
 
 
 def send_application_email(*, recipient, reply_to, copy_to, subject, body, cv_path, cv_filename, cv_mime_type="", cover_letter_text=""):
@@ -147,7 +192,7 @@ def send_verification_email(*,recipient,code):
 
 def app_link(path):
     from urllib.parse import urlsplit
-    base = os.environ.get("APP_BASE_URL", "http://127.0.0.1:8000").strip().rstrip("/")
+    base = os.environ.get("APP_BASE_URL", os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:8000")).strip().rstrip("/")
     parsed = urlsplit(base)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.username or parsed.password:
         base = "http://127.0.0.1:8000"

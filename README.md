@@ -512,3 +512,9 @@ Company domains now include `Génie civil` and `Construction / BTP`. These label
 
 ### Free Photo Studio
 CV Builder defaults to browser-based photo enhancement (square framing, zoom, vertical positioning, brightness and a subtle border). It preserves the original background and does not use an AI provider. Only the saved result is uploaded to the private portrait gallery; CV/profile selection and download use the existing owner-scoped routes. The optional AI mode still requires Gemini image credits and explicit provider consent. Both modes share the existing six-per-day storage limit. No new service, key or dependency is required for free mode.
+
+## Free hosting storage and email
+
+Render Free uses private Supabase Storage with UPLOAD_STORAGE=supabase, SUPABASE_URL, SUPABASE_STORAGE_BUCKET and the server-only SUPABASE_STORAGE_KEY. Existing authenticated download routes hydrate a disposable local cache. Local file mode remains the default outside deployment. Keep the bucket private and migrate existing uploads before launch. See DEPLOYMENT.md.
+
+For free hosts that block SMTP, EMAIL_PROVIDER=brevo, BREVO_API_KEY and a verified BREVO_SENDER_EMAIL enable HTTPS transactional delivery. Existing SMTP remains available in local mode. Free hosting sleeps on idle, so background notifications are not continuously scheduled. No paid plan is enabled automatically.
