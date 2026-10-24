@@ -55,7 +55,9 @@ def init_db():
                     'radar_source_checks', 'offer_alerts', 'career_plans', 'career_tasks',
                     'proof_projects', 'network_contacts', 'network_interactions',
                     'network_followup_alerts', 'career_scenarios', 'skill_practice_attempts',
-                    'email_verification_codes'}
+                    'email_verification_codes', 'admin_members', 'account_activity',
+                    'admin_daily_metrics', 'admin_page_metrics', 'support_tickets',
+                    'admin_incidents', 'admin_audit'}
         try:
             found = {row[0] for row in conn.execute(
                 'SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname=?',
@@ -388,6 +390,9 @@ def init_db():
         SELECT user_id,optimized_source,optimized_json,COALESCE(CAST(updated_at AS TEXT),CURRENT_TIMESTAMP),'legacy'
         FROM cv_builder_data WHERE optimized_json IS NOT NULL AND optimized_json<>''
         AND NOT EXISTS(SELECT 1 FROM cv_versions WHERE cv_versions.user_id=cv_builder_data.user_id)""")
+
+    from backend.admin_service import ensure_schema
+    ensure_schema(conn)
 
     conn.commit()
     conn.close()

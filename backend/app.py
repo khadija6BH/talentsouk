@@ -174,6 +174,9 @@ app.config["PORTRAIT_FOLDER"] = str(STORAGE_ROOT / "uploads" / "portraits")
 
 init_db()
 
+from backend.admin_routes import install as install_operations
+install_operations(app)
+
 
 @app.before_request
 def ensure_background_notifications():
