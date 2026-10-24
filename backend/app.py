@@ -232,12 +232,19 @@ def login_required(view_func):
             return redirect(url_for("login"))
         from backend.email_verification import verified
         account=get_user_by_id(session['user_id'])
-        if account and account['email_verification_required'] and not verified(account):
+        if account is None:
+            session.clear()
+            if request.path.startswith('/api/'):
+                return jsonify(error='Session expired. Please log in again.'),401
+            return redirect(url_for('login'))
+        # Email ownership is mandatory, including sessions created before the
+        # verification feature. The verification action itself exposes no app data.
+        if not verified(account) and request.endpoint != 'verify_current_email':
             uid=session['user_id'];session.clear();session['pending_email_user']=uid
             if request.path.startswith('/api/'):return jsonify(error='Verify your email before continuing.',verification_url=url_for('verify_email')),403
             return redirect(url_for('verify_email'))
         # Recheck persisted preferences for existing sessions and older accounts too.
-        if request.endpoint != "onboarding" and onboarding_required(session["user_id"]):
+        if request.endpoint not in {"onboarding", "verify_current_email"} and onboarding_required(session["user_id"]):
             if request.path.startswith("/api/"):
                 return jsonify(error="Complete your career preferences before continuing.", onboarding_url=url_for("onboarding")), 403
             return redirect(url_for("onboarding"))

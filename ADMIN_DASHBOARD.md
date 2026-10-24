@@ -1,7 +1,7 @@
 # Administration and support
 
 The protected dashboard is `/admin`. The existing, verified
-`talentsouk68@gmail.com` account is the explicitly approved administrator.
+`khadijabouhdou966@gmail.com` account is the explicitly approved administrator.
 Privileges are stored by user ID in `admin_members`; session fields, signup
 inputs and email changes cannot grant membership. Verified email ownership is
 required on every admin request. Removing membership revokes existing sessions'
@@ -13,7 +13,7 @@ or account-data export is exposed by the dashboard.
 Before deploying this code to an existing PostgreSQL installation, run:
 
 ```text
-python scripts/migrate_admin.py --admin-email talentsouk68@gmail.com
+python scripts/migrate_admin.py --admin-email khadijabouhdou966@gmail.com
 ```
 
 This is an additive migration. It does not change existing user credentials,

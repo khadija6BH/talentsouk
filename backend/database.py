@@ -653,7 +653,7 @@ def update_user_password(user_id, password_hash):
 def create_user(full_name, email, password_hash):
     conn = get_db_connection()
     cursor = conn.execute(
-        "INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)",
+        "INSERT INTO users (full_name, email, password_hash, email_verification_required) VALUES (?, ?, ?, 1)",
         (full_name, email, password_hash),
     )
     conn.commit()
