@@ -31,6 +31,7 @@ from flask import (
     Flask, flash, jsonify, make_response, redirect, render_template, request,
     send_from_directory, session, url_for,
 )
+from itsdangerous import URLSafeTimedSerializer, BadSignature
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -81,7 +82,7 @@ from backend.matching_service import match_candidate_to_offer, match_company_off
 from backend.skill_gap_service import analyze_market_skill_gap
 from backend.smtp_service import (
     SMTPConfigurationError, send_application_email, send_password_reset_email,
-    smtp_configured,
+    smtp_configured, app_link,
 )
 from backend.sqlite_service import (
     connection_status, create_tracked_application, create_crm_record,
@@ -348,14 +349,33 @@ def forgot_password():
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
-        user = get_user_by_email(email) if email else None
+        if not _valid_email(email) or len(email) > 254:
+            flash("Enter a valid account email address.", "error")
+            return render_template("forgot_password.html", email=email), 400
+        # Persisted per-account limits work across serverless instances.
+        user = get_user_by_email(email)
+        limited = False
         if user is not None:
+            conn = get_db_connection()
+            recent = conn.execute(
+                "SELECT COUNT(*) AS total FROM password_reset_tokens WHERE user_id = ? "
+                "AND created_at > datetime('now', '-1 hour')", (user["id"],)
+            ).fetchone()["total"]
+            cooldown = conn.execute(
+                "SELECT id FROM password_reset_tokens WHERE user_id = ? "
+                "AND created_at > datetime('now', '-1 minute')", (user["id"],)
+            ).fetchone()
+            conn.close()
+            limited = recent >= 5 or cooldown is not None
+        if user is not None and not limited:
             reset_code = "".join(secrets.choice("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(8))
             token_hash = hashlib.sha256(reset_code.encode("utf-8")).hexdigest()
             expires_at = (datetime.now(timezone.utc) + timedelta(minutes=60)).strftime("%Y-%m-%d %H:%M:%S")
             create_password_reset_token(user["id"], token_hash, expires_at)
             try:
-                send_password_reset_email(recipient=user["email"], reset_code=reset_code)
+                signed = URLSafeTimedSerializer(app.secret_key, salt="password-reset-email").dumps(reset_code)
+                reset_url = app_link(url_for("reset_password_email", signed=signed))
+                send_password_reset_email(recipient=user["email"], reset_code=reset_code, reset_url=reset_url)
             except (SMTPConfigurationError, smtplib.SMTPException, OSError):
                 app.logger.exception("Password reset email delivery failed")
 
@@ -363,22 +383,23 @@ def forgot_password():
             "If an account exists for that email, a password-reset code has been sent.",
             "success",
         )
-        return redirect(url_for("reset_password_code", email=email))
+        session["reset_email"] = email
+        return redirect(url_for("reset_password_code"))
 
-    return render_template("forgot_password.html")
+    return render_template("forgot_password.html", email=request.args.get("email", ""))
 
 
 @app.route("/reset-password-code", methods=["GET", "POST"])
 def reset_password_code():
     if session.get("user_id"):
         return redirect(url_for("dashboard"))
-    email = request.values.get("email", "").strip().lower()
+    email = request.values.get("email", session.get("reset_email", "")).strip().lower()
     if request.method == "POST":
-        code = request.form.get("code", "").strip().upper().replace(" ", "")
+        code = re.sub(r"[\s\-\u200b\u200e\u200f\ufeff]", "", request.form.get("code", "")).upper()
         password = request.form.get("password", "")
         confirm_password = request.form.get("confirm_password", "")
         if not email or "@" not in email or len(code) != 8:
-            flash("Enter your email and the 8-character code from Gmail.", "error")
+            flash("Enter your account email and the 8-character code from the TalentSouk email.", "error")
         elif len(password) < 8:
             flash("Password must be at least 8 characters long.", "error")
         elif password != confirm_password:
@@ -393,8 +414,29 @@ def reset_password_code():
     return render_template("reset_password_code.html", email=email)
 
 
+@app.route("/reset-password-email/<signed>", methods=["GET", "POST"])
+def reset_password_email(signed):
+    try:
+        token = URLSafeTimedSerializer(app.secret_key, salt="password-reset-email").loads(signed, max_age=3600)
+    except BadSignature:
+        return render_template("reset_password.html", invalid_token=True), 400
+    return _reset_password(token, url_for("reset_password_email", signed=signed))
+
+
+@app.after_request
+def protect_password_reset_response(response):
+    if request.endpoint in {"forgot_password", "reset_password_code", "reset_password", "reset_password_email"}:
+        response.headers["Cache-Control"] = "private, no-store"
+        response.headers["Referrer-Policy"] = "no-referrer"
+    return response
+
+
 @app.route("/reset-password/<token>", methods=["GET", "POST"])
 def reset_password(token):
+    return _reset_password(token, url_for("reset_password", token=token))
+
+
+def _reset_password(token, reset_action):
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     if not password_reset_token_is_valid(token_hash):
         return render_template("reset_password.html", invalid_token=True), 400
@@ -404,17 +446,17 @@ def reset_password(token):
         confirm_password = request.form.get("confirm_password", "")
         if len(password) < 8:
             flash("Password must be at least 8 characters long.", "error")
-            return render_template("reset_password.html", token=token), 400
+            return render_template("reset_password.html", token=token, reset_action=reset_action), 400
         if password != confirm_password:
             flash("Passwords do not match.", "error")
-            return render_template("reset_password.html", token=token), 400
+            return render_template("reset_password.html", token=token, reset_action=reset_action), 400
         if not reset_password_with_token(token_hash, generate_password_hash(password)):
             return render_template("reset_password.html", invalid_token=True), 400
         session.clear()
         flash("Your password has been reset. You can now log in.", "success")
         return redirect(url_for("login"))
 
-    return render_template("reset_password.html", token=token)
+    return render_template("reset_password.html", token=token, reset_action=reset_action)
 
 
 @app.route("/register", methods=["GET", "POST"])

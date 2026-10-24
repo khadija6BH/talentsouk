@@ -663,13 +663,8 @@ def create_user(full_name, email, password_hash):
 
 
 def create_password_reset_token(user_id, token_hash, expires_at):
-    """Invalidate older tokens and store only the hash of the new reset token."""
+    """Store a reset hash; older delivered codes remain usable until expiry."""
     conn = get_db_connection()
-    conn.execute(
-        "UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP "
-        "WHERE user_id = ? AND used_at IS NULL",
-        (user_id,),
-    )
     conn.execute(
         "INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)",
         (user_id, token_hash, expires_at),
@@ -707,8 +702,8 @@ def reset_password_with_token(token_hash, password_hash):
             (password_hash, token["user_id"]),
         )
         conn.execute(
-            "UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (token["id"],),
+            "UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_id = ? AND used_at IS NULL",
+            (token["user_id"],),
         )
         conn.commit()
         return True
@@ -740,8 +735,8 @@ def reset_password_with_code(email, code_hash, password_hash):
             (password_hash, token["user_id"]),
         )
         conn.execute(
-            "UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (token["id"],),
+            "UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_id = ? AND used_at IS NULL",
+            (token["user_id"],),
         )
         conn.commit()
         return True

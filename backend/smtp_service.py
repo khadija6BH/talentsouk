@@ -168,6 +168,11 @@ def send_password_reset_email(*, recipient, reset_url=None, reset_code=None):
         )
     else:
         raise ValueError("A reset URL or verification code is required.")
+    if reset_code and reset_url:
+        text_body = "Reset your password directly:\n" + reset_url + "\n\n" + text_body
+        html_body = ('<p><a style="display:inline-block;padding:14px 22px;background:#673147;color:white;'
+                     'border-radius:10px;text-decoration:none" href="' + escape(reset_url, quote=True) +
+                     '">Reset your password</a></p><p>Or use the backup code below.</p>' + html_body)
     # Keep the URL intact in plain-text clients and provide an explicit link for
     # HTML clients. Quoted-printable wrapping can otherwise split the token.
     message.set_content(text_body, cte="8bit")
