@@ -13,7 +13,7 @@ from datetime import date, datetime
 
 import psycopg
 from psycopg.pq import TransactionStatus
-from psycopg_pool import ConnectionPool, PoolTimeout
+from psycopg_pool import ConnectionPool, NullConnectionPool, PoolTimeout
 import sqlparse
 
 UTC_TEXT = "to_char(CURRENT_TIMESTAMP AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')"
@@ -115,8 +115,12 @@ class Connection:
                         raw.execute("SET TIME ZONE 'UTC'")
                         raw.execute('SET extra_float_digits=3')
                         raw.execute("SET statement_timeout='30s'")
-                    pool = ConnectionPool(url, kwargs={'sslmode': 'require', 'connect_timeout': 15,
-                        'autocommit': True, 'prepare_threshold': None}, min_size=0, max_size=5,
+                    # Frozen serverless instances must not pin idle Supabase
+                    # session-pooler slots (the free pool is shared by instances).
+                    serverless = os.environ.get('VERCEL') == '1'
+                    pool_type = NullConnectionPool if serverless else ConnectionPool
+                    pool = pool_type(url, kwargs={'sslmode': 'require', 'connect_timeout': 15,
+                        'autocommit': True, 'prepare_threshold': None}, min_size=0, max_size=2 if serverless else 5,
                         timeout=20, configure=configure, open=True)
                     atexit.register(pool.close)
                     POOLS[key] = (pool, {})
