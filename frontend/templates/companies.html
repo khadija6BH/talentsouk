@@ -181,7 +181,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static',filename='css/dashboard_editorial.css',v='20261015-menu2') }}">
-<link rel="stylesheet" href="{{ url_for('static',filename='css/companies_directory.css',v='20261015') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/companies_directory.css',v='20261106-view-contrast') }}">
 <style>
   .filter-select {
     background-color: #F8FAFC;
@@ -455,7 +455,7 @@
       </div>
 
       <div class="company-actions pt-1 border-t border-slate-100 pt-3">
-        <a class="btn btn-ghost text-xs !px-3 !py-1.5 view-btn" data-id="${company.id}" href="/companies/${company.id}">View</a>
+        <a class="btn btn-primary text-xs !px-3 !py-1.5 view-btn" data-id="${company.id}" href="/companies/${company.id}">View</a>
         ${website ? `<a class="btn btn-ghost company-action text-xs website-btn" href="${website.url}" target="_blank" rel="noopener noreferrer">Official Site</a>` : ""}
         ${whatsapp ? `<button type="button" class="btn btn-ghost company-action text-xs whatsapp-btn" data-id="${company.id}">WhatsApp</button>` : ""}
         ${offerLink ? `<a class="btn btn-primary company-action text-xs !px-3 !py-1.5 offer-link" href="${offerLink.url}" target="_blank" rel="noopener noreferrer">View Offer</a>` : ""}
