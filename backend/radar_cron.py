@@ -15,19 +15,23 @@ def refresh_scheduled_offers():
     expected = ('Bearer ' + secret).encode('utf-8')
     if not hmac.compare_digest(request.headers.get('Authorization', '').encode('utf-8'), expected):
         return jsonify(error='Unauthorized'), 401
-    from backend.job_sources import source_status
-    if not source_status().get('jooble'):
+    from backend.job_sources import source_status,MARRAKECH_PROVIDERS
+    configured = source_status()
+    active = [provider for provider in MARRAKECH_PROVIDERS if configured.get(provider)]
+    if not active:
         return jsonify(error='The Morocco offer source is not configured.'), 503
     from backend.radar_watch import run_cycle, watch_status
     try:
-        # Bound source calls to five pages, without extra per-user queries.
-        # The DB lease and moderation states are preserved.
+        # API and public-page collectors are bounded, without per-user searches.
         ran = run_cycle(include_profile_queries=False, pages=5)
         if not ran:
             return jsonify(status='skipped', reason='Refresh already running or checked recently.')
         _, checks = watch_status()
-        if any(check['provider'] == 'jooble' and check['status'] == 'error' for check in checks):
-            return jsonify(error='Offer source refresh failed. Saved offers are preserved.'), 503
+        failed = [check['provider'] for check in checks if check['provider'] in active and check['status']=='error']
+        if len(failed)==len(active):
+            return jsonify(error='Offer sources could not be refreshed. Saved offers are preserved.'), 503
+        if failed:
+            return jsonify(status='partial',failed_sources=failed)
         return jsonify(status='ok')
     except Exception:
         logging.getLogger(__name__).warning('Scheduled offer refresh failed')

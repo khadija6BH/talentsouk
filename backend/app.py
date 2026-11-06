@@ -1117,11 +1117,11 @@ def applications():
 @login_required
 def opportunity_radar():
     from backend.opportunity_radar import radar_data
-    from backend.job_sources import source_status, COUNTRIES, PROVIDERS
+    from backend.job_sources import source_status, COUNTRIES, PROVIDERS, MARRAKECH_PROVIDERS
     from backend.radar_watch import watch_status
     watcher,source_checks=watch_status()
     offers, last_refresh = radar_data()
-    sources = sorted({o['source'] for o in offers if o['source']} | set(PROVIDERS.values()))
+    sources = sorted({o['source'] for o in offers if o['source']} | {PROVIDERS[p] for p in MARRAKECH_PROVIDERS})
     locations = sorted({o['location'] for o in offers if o['location']})
     contracts = sorted({o['offer_type'] for o in offers if o['offer_type']})
     search = request.args.get('q', '').strip()[:200]

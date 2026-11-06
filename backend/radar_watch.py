@@ -92,13 +92,14 @@ def run_cycle(*, include_profile_queries=True, pages=1):
             cursor=conn.execute("UPDATE radar_watch_state SET last_started=CURRENT_TIMESTAMP,lease_until=datetime('now','+15 minutes') WHERE id=1 AND (lease_until IS NULL OR lease_until<CURRENT_TIMESTAMP) AND (last_started IS NULL OR last_started<=datetime('now','-15 minutes'))")
             if not cursor.rowcount:return False
     finally:conn.close()
-    from backend.job_sources import source_status,JobSourceError
+    from backend.job_sources import source_status,JobSourceError,MARRAKECH_PROVIDERS
     from backend.opportunity_radar import refresh_external_offers
     preferences=alert_preferences()
     queries=[]
     status=source_status()
-    if status['jooble']:queries.append(('jooble','ma','','Marrakech'))
-    # Other configured providers do not supply Morocco in these adapters.
+    for provider in MARRAKECH_PROVIDERS:
+        if status.get(provider):queries.append((provider,'ma','','Marrakech'))
+    # International adapters stay outside this Marrakech-only schedule.
     # Bound authenticated calls per hour; rotate extra user searches each hour.
     extras=[]
     for _,p in preferences:
@@ -113,7 +114,7 @@ def run_cycle(*, include_profile_queries=True, pages=1):
     try:
         for provider,country,keyword,city in queries:
             try:
-                if pages == 1:
+                if pages == 1 or provider not in {'jooble','adzuna'}:
                     result=refresh_external_offers(provider,country,keyword,city)
                 else:
                     result=refresh_external_offers(provider,country,keyword,city,pages=pages)

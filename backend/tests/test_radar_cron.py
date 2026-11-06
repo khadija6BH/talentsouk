@@ -44,6 +44,32 @@ class RadarCronTest(unittest.TestCase):
             self.assertEqual(response.status_code, 503)
             self.assertNotIn(b'private database', response.data)
 
+    def test_public_sources_work_without_jooble_and_partial_failure_is_reported(self):
+        available={'jooble':False,'postule':True,'jobradar':True}
+        checks=[{'provider':'postule','status':'ok'},{'provider':'jobradar','status':'error'}]
+        with patch.dict(os.environ,{'CRON_SECRET':'test-only-secret'}),patch('backend.job_sources.source_status',return_value=available),patch('backend.radar_watch.run_cycle',return_value=True),patch('backend.radar_watch.watch_status',return_value=({},checks)):
+            response=self.request_refresh()
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response.get_json(),{'status':'partial','failed_sources':['jobradar']})
+
+    def test_one_failed_source_does_not_block_other_marrakech_sources(self):
+        from backend.radar_watch import run_cycle
+        from backend.job_sources import JobSourceError
+        available={'jooble':True,'postule':True,'jobradar':True,'marocemploi':True,'adzuna':True,'arbeitnow':True,'jobicy':True}
+        with tempfile.TemporaryDirectory() as directory:
+            def connect():
+                conn=sqlite3.connect(os.path.join(directory,'cycle.db'));conn.row_factory=sqlite3.Row
+                return conn
+            with patch('backend.radar_watch.get_db_connection',side_effect=connect),patch('backend.radar_watch.alert_preferences',return_value=[]),patch('backend.job_sources.source_status',return_value=available),patch('backend.opportunity_radar.refresh_external_offers',side_effect=[JobSourceError('source failure'),{'created':1,'updated':0},{'created':2,'updated':0},{'created':3,'updated':0}]) as refresh:
+                self.assertTrue(run_cycle(include_profile_queries=False,pages=5))
+                self.assertEqual([call.args[0] for call in refresh.call_args_list],['jooble','postule','jobradar','marocemploi'])
+                self.assertEqual(refresh.call_args_list[0].kwargs,{'pages':5})
+                self.assertTrue(all(not call.kwargs for call in refresh.call_args_list[1:]))
+            conn=connect()
+            self.assertEqual({row['provider']:row['status'] for row in conn.execute('SELECT * FROM radar_source_checks')},{'jooble':'error','postule':'ok','jobradar':'ok','marocemploi':'ok'})
+            self.assertIsNone(conn.execute('SELECT lease_until FROM radar_watch_state WHERE id=1').fetchone()[0])
+            conn.close()
+
     def test_serverless_cycle_uses_one_query_and_preserves_database_lease(self):
         from backend.radar_watch import run_cycle
         with tempfile.TemporaryDirectory() as directory:

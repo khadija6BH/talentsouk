@@ -23,9 +23,9 @@
       button.querySelector('.radar-button-label').textContent=label;
     }
   });
-  const notes={jobicy:'Latest remote offers (up to 100). Check each offer’s location restrictions. Responses are cached for one hour.',local_csv:'The local file is read without contacting job websites.',jooble:'Search up to five pages of Jooble Morocco results. Your key stays on the server.',adzuna:'Import up to five pages of search results. Your credentials stay on the server.',arbeitnow:'Search within the latest Germany feed (up to 100 offers). Remote offers can have location restrictions.'};
+  const notes={jobicy:'Remote offers are outside this Marrakech-only directory.',local_csv:'The local file is read without contacting job websites.',jooble:'Search up to five pages of Jooble Morocco results. Your key stays on the server.',adzuna:'International offers are outside this Marrakech-only directory.',arbeitnow:'Germany offers are outside this Marrakech-only directory.',postule:'Recent Marrakech vacancies from Postule.ma, with a link to the full announcement.',jobradar:'Recent Marrakech vacancies from JobRadar.ma, with a link to the full announcement.',marocemploi:'Recent Marrakech vacancies from MarocEmploi, with a link to the full announcement.'};
   function selectSource(){
-    const supported={jooble:['ma'],adzuna:['fr','gb','de','us'],arbeitnow:['de'],jobicy:['remote']}[source.value];
+    const supported={jooble:['ma'],postule:['ma'],jobradar:['ma'],marocemploi:['ma'],adzuna:['fr','gb','de','us'],arbeitnow:['de'],jobicy:['remote']}[source.value];
     [...country.options].forEach(option=>option.disabled=Boolean(supported&&!supported.includes(option.value)));
     country.disabled=source.value==='local_csv';
     if(supported&&!supported.includes(country.value))country.value=supported[0];

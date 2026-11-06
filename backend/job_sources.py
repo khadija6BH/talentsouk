@@ -9,7 +9,10 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 COUNTRIES = {'ma':'Morocco','fr':'France','gb':'United Kingdom','de':'Germany','us':'United States','remote':'Remote — Worldwide'}
-PROVIDERS = {'jooble':'Jooble', 'adzuna':'Adzuna', 'arbeitnow':'Arbeitnow','jobicy':'Jobicy'}
+PROVIDERS = {'jooble':'Jooble', 'adzuna':'Adzuna', 'arbeitnow':'Arbeitnow','jobicy':'Jobicy',
+             'postule':'Postule.ma','jobradar':'JobRadar.ma','marocemploi':'MarocEmploi'}
+MARRAKECH_PROVIDERS = ('jooble','postule','jobradar','marocemploi')
+HTML_PROVIDERS = frozenset(MARRAKECH_PROVIDERS[1:])
 
 class JobSourceError(ValueError):
     pass
@@ -18,7 +21,7 @@ class JobSourceError(ValueError):
 def source_status():
     return {'jooble': bool(os.getenv('JOOBLE_API_KEY','').strip()),
             'adzuna': bool(os.getenv('ADZUNA_APP_ID','').strip() and os.getenv('ADZUNA_APP_KEY','').strip()),
-            'arbeitnow': True, 'jobicy': True}
+            'arbeitnow': True, 'jobicy': True, 'postule': True, 'jobradar': True, 'marocemploi': True}
 
 
 def _json(url, payload=None):
@@ -67,6 +70,11 @@ def fetch_offers(provider, country, keyword='', location='', page=1):
         raise JobSourceError('Choose an API page between 1 and 5.')
     if provider not in PROVIDERS or country not in COUNTRIES:
         raise JobSourceError('Choose a valid source and country.')
+    if provider in HTML_PROVIDERS:
+        if country != 'ma' or page != 1:
+            raise JobSourceError('This public source supports Marrakech, Morocco with bounded listing pagination.')
+        from backend.moroccan_sources import fetch_marrakech
+        return fetch_marrakech(provider,keyword.strip()[:200],location.strip()[:200])
     if provider == 'jooble' and country != 'ma':
         raise JobSourceError('This Jooble connection is for Morocco. Another country needs its own regional key.')
     if provider == 'adzuna' and country not in {'fr','gb','de','us'}:

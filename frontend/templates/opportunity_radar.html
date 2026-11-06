@@ -17,7 +17,7 @@
     <div class="radar-filters">{% for key,label,options in [('source','Source',sources),('location','Location',locations),('contract','Contract',contracts)] %}<label for="radar-{{ key }}">{{ label }}<select id="radar-{{ key }}" name="{{ key }}"><option value="">All</option>{% for option in options %}<option value="{{ option }}" {{ 'selected' if filters[key]==option }}>{{ option }}</option>{% endfor %}</select></label>{% endfor %}</div>
   </form>
 
-  <div class="radar-sync-strip"><div class="radar-sync-copy"><span class="radar-sync-dot" aria-hidden="true"></span><div><strong>Offer updates</strong><p>Imported offers require review before publication. Use Import new offers to request a source update.</p></div></div><a class="btn btn-secondary" href="{{ url_for('profile') }}">Set my target job and career field</a></div>
+  <div class="radar-sync-strip"><div class="radar-sync-copy"><span class="radar-sync-dot" aria-hidden="true"></span><div><strong>Offer updates</strong><p>Recent Marrakech offers are refreshed daily from connected sources.</p></div></div><a class="btn btn-secondary" href="{{ url_for('profile') }}">Set my target job and career field</a></div>
   <div id="radar-new-offers" class="radar-new-offers hidden" role="status"><p>New offers are ready.</p><button class="btn btn-primary" type="button">Show latest offers</button></div>
 
   <details class="radar-import" id="radar-sources">
@@ -25,12 +25,12 @@
     <div class="radar-import-body">
       {% if watcher.last_finished %}<p class="radar-meta">Last automatic check (UTC): {{ watcher.last_finished }}</p>{% endif %}
       {% if source_checks %}<details class="radar-source-checks"><summary>Source update status</summary>{% for check in source_checks %}<p>{{ check.provider }} · {{ check.status }} · {{ check.message }}</p>{% endfor %}</details>{% endif %}
-      <h2>Import new offers</h2><p class="radar-meta">Only offers in Morocco are saved. Some sources may return no eligible offers.</p>
-      <div class="radar-source-status" aria-label="Source configuration"><span>Jooble · {{ 'Configured' if source_status.jooble else 'Key required' }}</span><span>Adzuna · {{ 'Configured' if source_status.adzuna else 'Credentials required' }}</span><span>Arbeitnow · No key needed</span><span>Jobicy · No key needed</span></div>
+      <h2>Import new offers</h2><p class="radar-meta">Only recent offers with a verified Marrakech location are saved. Expired offers and unknown dates are excluded.</p>
+      <div class="radar-source-status" aria-label="Source configuration"><span>Jooble · {{ 'Configured' if source_status.jooble else 'Key required' }}</span><span>Postule.ma · Public listings</span><span>JobRadar.ma · Public listings</span><span>MarocEmploi · Public listings</span></div>
       <form method="post" action="{{ url_for('opportunity_radar_refresh') }}" id="radar-refresh" class="radar-import-form">
-        <label for="import-source">Import source<select id="import-source" name="provider"><option value="local_csv">Local offers file</option><option value="jooble" {{ 'disabled' if not source_status.jooble }}>Jooble — Morocco{{ ' (key required)' if not source_status.jooble }}</option><option value="adzuna" {{ 'disabled' if not source_status.adzuna }}>Adzuna — International{{ ' (credentials required)' if not source_status.adzuna }}</option><option value="arbeitnow">Arbeitnow — Germany</option><option value="jobicy">Jobicy — Remote</option></select></label>
+        <label for="import-source">Import source<select id="import-source" name="provider"><option value="jooble" {{ 'disabled' if not source_status.jooble }}>Jooble — Marrakech{{ ' (key required)' if not source_status.jooble }}</option><option value="postule">Postule.ma — Marrakech</option><option value="jobradar">JobRadar.ma — Marrakech</option><option value="marocemploi">MarocEmploi — Marrakech</option><option value="local_csv">Local offers file</option><option value="adzuna" disabled>Adzuna — Outside Marrakech</option><option value="arbeitnow" disabled>Arbeitnow — Outside Marrakech</option><option value="jobicy" disabled>Jobicy — Remote</option></select></label>
         <label for="import-country">Country<select id="import-country" name="country">{% for code,name in countries.items() %}<option value="{{ code }}">{{ name }}</option>{% endfor %}</select></label>
-        <label>Job title or keyword<input name="keyword" maxlength="200" placeholder="Developer, marketing, data…"></label><label>City or region (optional)<input name="city" maxlength="200" placeholder="Marrakech, Casablanca, Rabat…"></label>
+        <label>Job title or keyword<input name="keyword" maxlength="200" placeholder="Developer, marketing, data…"></label><label>City<input name="city" maxlength="200" value="Marrakech" placeholder="Marrakech"></label>
         <p id="source-help" class="radar-meta">The local file is read without contacting job websites.</p><div><button class="btn btn-primary" type="submit"><span class="radar-button-label">Refresh offers</span><span class="radar-spinner" aria-hidden="true"></span></button></div>
       </form>
     </div>

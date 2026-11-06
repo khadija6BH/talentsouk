@@ -59,15 +59,15 @@ def refresh_external_offers(provider,country,keyword='',location='', *, pages=1)
     return import_external_offers(provider,country,rows,skipped)
 
 
-def import_external_offers(provider,country,rows,skipped=0):
+def import_external_offers(provider,country,rows,skipped=0, *, notify=True):
     """Persist the fetched response without spending another source request."""
-    from backend.job_sources import JobSourceError
+    from backend.job_sources import JobSourceError, HTML_PROVIDERS
     from backend.offer_lifecycle import recent_offer,activate_offer,expire_offers,ensure_catalog_schema
     domestic=[row for row in rows if recent_offer(row)]
     skipped+=len(rows)-len(domestic)
     rows=domestic
     from backend.radar_watch import alert_preferences,notify_new_offers
-    preferences=alert_preferences()
+    preferences=alert_preferences() if notify else []
     conn=get_db_connection()
     try:
         with conn:
@@ -80,7 +80,11 @@ def import_external_offers(provider,country,rows,skipped=0):
             checked_ids=set()
             for row in rows:
                 matches=sync.company_index.get(('name',normalized_name(row['company_name'])),set())
-                if len(matches)>1: raise JobSourceError('A company has ambiguous duplicates. No offers were changed.')
+                if len(matches)>1:
+                    if provider in HTML_PROVIDERS:
+                        skipped += 1
+                        continue
+                    raise JobSourceError('A company has ambiguous duplicates. No offers were changed.')
                 company_id=next(iter(matches),None)
                 if company_id is None:
                     company_id=sync.company({'name':row['company_name'],'area':row['location'],'has_offer':1})
@@ -90,7 +94,7 @@ def import_external_offers(provider,country,rows,skipped=0):
                 if offer_id not in existing_ids:
                     new_offers.append(dict(values,id=offer_id));existing_ids.add(offer_id)
                 conn.execute("INSERT INTO offer_sync_metadata(offer_id,adapter) VALUES(?,?) ON CONFLICT(offer_id) DO UPDATE SET last_checked=CURRENT_TIMESTAMP,adapter=excluded.adapter",(offer_id,provider))
-                activate_offer(conn,offer_id)
+                activate_offer(conn,offer_id,reason='recent_public_jobposting' if provider in HTML_PROVIDERS else 'recent_api_response')
                 conn.execute('UPDATE companies SET has_offer=1 WHERE id=?',(company_id,))
             duplicates = [identifier for identifier,target in sync.duplicate_offer_ids.items() if target in checked_ids]
             for start in range(0,len(duplicates),400):
@@ -101,7 +105,8 @@ def import_external_offers(provider,country,rows,skipped=0):
             for start in range(0,len(hidden),400):
                 batch=hidden[start:start+400]
                 conn.execute("UPDATE offer_catalog_status SET is_active=0,reason='review_required' WHERE offer_id IN (" + ','.join('?' for _ in batch) + ')',tuple(batch))
-            notify_new_offers(conn,[o for o in new_offers if o['id'] not in review_blocks],preferences)
+            if notify:
+                notify_new_offers(conn,[o for o in new_offers if o['id'] not in review_blocks],preferences)
             result={'created':sync.created['offers'],'updated':sync.updated['offers'],'skipped':skipped}
             conn.execute('INSERT INTO opportunity_refreshes(created_count,updated_count,provider,country) VALUES(?,?,?,?)',(result['created'],result['updated'],provider,country))
         return result

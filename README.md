@@ -1,5 +1,38 @@
 # TalentSouk
 
+## Marrakech public job sources
+
+The daily protected offer refresh now combines Jooble Morocco with public
+JobPosting metadata from Postule.ma, JobRadar.ma and MarocEmploi. The latter
+three need no API key or account. The import panel exposes each source and
+the source filter shows their attribution and links to the full announcements.
+
+Collection reads robots rules, uses an identified TalentSouk user agent,
+throttles requests, permits only same-origin HTTPS pages/redirects, and is
+bounded to two discovered listing pages, forty detail pages and forty seconds
+per source. No login, application form, private API or protection bypass is
+used. Full publisher descriptions are not copied into TalentSouk.
+
+An announcement needs a named employer, an absolute datePosted within the
+existing thirty-day publication window, and an explicit Marrakech city in its
+structured jobLocation. Region-only/ambiguous locations, missing dates,
+account emails presented as employer names, and already expired validThrough
+dates are excluded. Source URL identity prevents repeat imports of the same
+announcement. Original records and personal application references are kept.
+Freshness is checked when collected and uses the existing seven-day catalog
+verification window; absence from a bounded page is not proof of closure.
+
+Sources run independently. A failure does not stop other Marrakech sources;
+the cron reports partial success with failed source names, or HTTP 503 if all
+configured domestic sources fail. Source status remains visible in the app.
+International/remote adapters remain available in the backend but are outside
+this Marrakech-only import schedule and disabled in its source picker.
+
+Initial checked import on November 6, 2026: Postule.ma 20, JobRadar.ma 27,
+MarocEmploi 3; the public catalog increased from 181 to 231 records.
+Emploi.ma refused the probe with HTTP 403 and was not integrated. Trabajo
+remains historical imported data, without a verified direct API connection.
+
 TalentSouk is a local Flask web application for organizing a job search in Marrakech. It combines a company and job directory with a personal application pipeline, lightweight CRM, CV tools, reminders, notifications, and explainable matching helpers.
 
 The application keeps SQLite as its single source of truth and Flask sessions for authentication. Evidence-based local matching remains available, while cover-letter generation and CV advice can optionally use a user-selected Gemini, Groq, or NVIDIA NIM model through server-side API keys.

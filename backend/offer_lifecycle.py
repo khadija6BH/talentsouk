@@ -32,10 +32,10 @@ def ensure_catalog_schema(conn):
         status TEXT NOT NULL DEFAULT 'pending', note TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL)""")
 
 
-def activate_offer(conn, offer_id):
+def activate_offer(conn, offer_id, reason='recent_api_response'):
     conn.execute('''INSERT INTO offer_catalog_status(offer_id,is_active,verified_at,reason)
-        VALUES(?,1,CURRENT_TIMESTAMP,'recent_api_response') ON CONFLICT(offer_id)
-        DO UPDATE SET is_active=1,verified_at=CURRENT_TIMESTAMP,reason='recent_api_response' ''',(offer_id,))
+        VALUES(?,1,CURRENT_TIMESTAMP,?) ON CONFLICT(offer_id)
+        DO UPDATE SET is_active=1,verified_at=CURRENT_TIMESTAMP,reason=excluded.reason ''',(offer_id,reason))
 
 
 def expire_offers(conn):

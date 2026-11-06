@@ -4,8 +4,10 @@ import unicodedata
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 PROVIDER_HOSTS = {'jooble': ('jooble.org',), 'adzuna': ('adzuna.com', 'adzuna.co.uk'),
-                  'arbeitnow': ('arbeitnow.com',), 'jobicy': ('jobicy.com',)}
-SOURCE_NAMES = {'jooble': 'Jooble', 'adzuna': 'Adzuna', 'arbeitnow': 'Arbeitnow', 'jobicy': 'Jobicy'}
+                  'arbeitnow': ('arbeitnow.com',), 'jobicy': ('jobicy.com',),
+                  'postule': ('postule.ma',), 'jobradar': ('jobradar.ma',), 'marocemploi': ('marocemploi.net',)}
+SOURCE_NAMES = {'jooble': 'Jooble', 'adzuna': 'Adzuna', 'arbeitnow': 'Arbeitnow', 'jobicy': 'Jobicy',
+                'postule':'Postule.ma', 'jobradar':'JobRadar.ma', 'marocemploi':'MarocEmploi'}
 
 
 def normalized(value):
