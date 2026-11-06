@@ -97,7 +97,7 @@ function initNotifications() {
     if (document.hidden || pending) return;
     pending = true;
     try {
-      const response = await fetch("/api/notifications", {headers:{Accept:"application/json"}});
+      const response = await fetch("/api/notifications", {cache:"no-store",headers:{Accept:"application/json"}});
       if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) {
         throw new Error(response.status === 403 ? "Complete your profile or verify your email to load notifications." : "Could not load notifications. Please try again.");
       }
@@ -116,7 +116,7 @@ function initNotifications() {
         const message = document.createElement("p"); message.className = "text-xs text-slate-500 mt-1"; message.textContent = item.message;
         row.append(title,time); link.append(row,message); list.append(link);
       }
-      if (!data.items.length) { const empty = document.createElement("p"); empty.className="p-5 text-center text-sm text-slate-400"; empty.textContent="No notifications yet."; list.append(empty); }
+      if (!data.items.length) { const empty = document.createElement("p"); empty.className="p-5 text-center text-sm text-slate-400"; empty.textContent="No matching offers yet. Check your target position and skills in My profile. New matches appear here automatically."; list.append(empty); }
     } catch (failure) {
       if (error) { error.textContent = failure.message; error.classList.remove("hidden"); }
     }

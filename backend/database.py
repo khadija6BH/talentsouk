@@ -1094,6 +1094,8 @@ def create_notification(user_id, kind, title, message="", url=""):
 
 def get_notifications(user_id):
     from backend.notification_events import emit_due_reminders
+    from backend.radar_watch import sync_matching_notifications
+    sync_matching_notifications(user_id)
     emit_due_reminders(user_id=user_id)
     conn = get_db_connection(); rows = conn.execute("SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC,id DESC LIMIT 30", (user_id,)).fetchall(); conn.close(); return rows
 

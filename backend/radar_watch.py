@@ -3,7 +3,9 @@ import re
 import os
 import threading
 import logging
-from backend.database import get_db_connection, get_cv_builder_data, get_user_settings
+import json
+import unicodedata
+from backend.database import get_db_connection
 
 
 def ensure_watch_schema(conn):
@@ -18,33 +20,56 @@ def ensure_watch_schema(conn):
 
 
 
-def alert_preferences():
+def alert_preferences(user_id=None):
     conn=get_db_connection()
-    try:users=[r['id'] for r in conn.execute('SELECT id FROM users')]
+    try:
+        # Read profiles in one request rather than opening two connections/user.
+        rows=conn.execute('''SELECT u.id,b.target_position,b.target_skills,
+            b.target_location,b.career_field,b.profiles_json,d.overrides_json
+            FROM users u LEFT JOIN cv_builder_data b ON b.user_id=u.id
+            LEFT JOIN career_dna_profiles d ON d.user_id=u.id
+            WHERE (CAST(? AS INTEGER) IS NULL OR u.id=?)''',(user_id,user_id)).fetchall()
     finally:conn.close()
     preferences=[]
-    for uid in users:
-        settings=get_user_settings(uid)
-        profile=get_cv_builder_data(uid)
-        manual=(profile.get('profiles') or {}).get('manual') or (profile.get('profiles') or {}).get('uploaded') or {}
-        profile['target_position']=profile.get('target_position') or manual.get('job_title','')
-        profile['alert_skills']=profile.get('target_skills') or manual.get('skills','')
-        preferences.append((uid,profile))
+    def object_json(raw):
+        try:value=json.loads(raw or '{}')
+        except (ValueError,TypeError):return {}
+        return value if isinstance(value,dict) else {}
+    for row in rows:
+        profiles=object_json(row['profiles_json'])
+        overrides=object_json(row['overrides_json'])
+        manual=profiles.get('manual') if isinstance(profiles.get('manual'),dict) else {}
+        uploaded=profiles.get('uploaded') if isinstance(profiles.get('uploaded'),dict) else {}
+        def evidence(key):
+            if key in overrides:return overrides[key]
+            return manual.get(key) or uploaded.get(key) or ''
+        profile={key:row[key] or '' for key in ('target_location','career_field')}
+        profile['target_position']=row['target_position'] or evidence('job_title')
+        profile['alert_skills']=row['target_skills'] or evidence('skills')
+        preferences.append((row['id'],profile))
     return preferences
 
 
 def relevance_reason(profile,offer):
-    text=(offer.get('title','')+' '+offer.get('description','')).casefold()
-    title=offer.get('title','').casefold()
+    def normalize(value):
+        value=''.join(c for c in unicodedata.normalize('NFKD',str(value or '').casefold()) if not unicodedata.combining(c))
+        aliases={'developpeur':'developer','developpeuse':'developer','developper':'developer',
+                 'analyste':'analyst','ingenieur':'engineer','logiciel':'software'}
+        return re.sub(r'\w+',lambda m:aliases.get(m[0],m[0]),value)
+    text=normalize(offer.get('title','')+' '+offer.get('description',''))
+    title=normalize(offer.get('title',''))
     from backend.offer_cleaning import marrakech_location
     target_location=str(profile.get('target_location') or '').strip()
     if target_location and target_location.casefold() not in {'morocco','maroc','remote','worldwide'} and not marrakech_location(target_location):return None
-    skills=[x.strip().casefold() for x in re.split(r'[,;\n]',str(profile.get('alert_skills') or '')) if len(x.strip())>1]
-    if skills and not any(re.search(r'(?<!\w)'+re.escape(skill)+r'(?!\w)',text) for skill in skills):return None
+    skills=[normalize(x.strip()) for x in re.split(r'[,;\n•]',str(profile.get('alert_skills') or '')) if len(x.strip())>1]
+    skill_match=any(re.search(r'(?<!\w)'+re.escape(skill)+r'(?!\w)',text) for skill in skills)
+    # Public JobPosting feeds contain factual summaries, not complete skill lists.
+    sparse_source=offer.get('source') in {'Postule.ma','JobRadar.ma','MarocEmploi'}
+    if skills and not skill_match and not sparse_source:return None
     role=str(profile.get('target_position') or '').strip()
     field=str(profile.get('career_field') or '').strip()
-    ignored={'senior','junior','intern','stage','the','and','de','du','en','des','of','job'}
-    words=[w for w in re.findall(r'[\w+#]+',role.casefold()) if len(w)>2 and w not in ignored]
+    ignored={'senior','junior','intern','stage','stagiaire','the','and','de','du','en','des','of','job','emploi','recherche','etudiant','etudiante'}
+    words=[w for w in re.findall(r'[\w+#]+',normalize(role)) if len(w)>2 and w not in ignored]
     if words and all(re.search(r'(?<!\w)'+re.escape(w)+r'(?!\w)',title) for w in words):
         return 'Matches your target position: '+role
     domains={
@@ -58,13 +83,14 @@ def relevance_reason(profile,offer):
         'cloud':['cloud','devops','sre']}
     if field:
         terms=domains.get(field.casefold(),[])
-        if any(re.search(r'(?<!\w)'+re.escape(term)+r'(?!\w)',title) for term in terms):return 'Matches your career field: '+field
+        if any(re.search(r'(?<!\w)'+re.escape(normalize(term))+r'(?!\w)',title) for term in terms):return 'Matches your career field: '+field
         if not terms and len(field)>2 and re.search(r'(?<!\w)'+re.escape(field.casefold())+r'(?!\w)',title):return 'Matches your career field: '+field
     return None
 
 
 def notify_new_offers(conn,new_offers,preferences):
     ensure_watch_schema(conn)
+    created=0
     for uid,profile in preferences:
         for offer in new_offers:
             reason=relevance_reason(profile,offer)
@@ -72,6 +98,32 @@ def notify_new_offers(conn,new_offers,preferences):
             cursor=conn.execute('INSERT OR IGNORE INTO offer_alerts(user_id,offer_id) VALUES(?,?)',(uid,offer['id']))
             if cursor.rowcount:
                 conn.execute("INSERT INTO notifications(user_id,kind,title,message,url) VALUES(?,'opportunity',?,?,?)",(uid,'New matching offer: '+offer['title'],reason+' · '+offer.get('source',''),'/opportunities/'+str(offer['id'])))
+                created+=1
+    return created
+
+
+def sync_matching_notifications(user_id):
+    """Recover missed imports/profile edits from the visible catalog, once/offer.
+
+    Runs inside the notification request, including on serverless deployments.
+    Reading/clearing notifications never removes the durable offer_alerts marker.
+    """
+    from backend.offer_lifecycle import recent_offer
+    preferences=alert_preferences(user_id)
+    conn=get_db_connection()
+    try:
+        with conn:
+            ensure_watch_schema(conn)
+            rows=conn.execute('''SELECT o.* FROM offers o
+                JOIN offer_catalog_status s ON s.offer_id=o.id
+                WHERE s.is_active=1 AND s.verified_at>=datetime('now','-7 days')
+                AND NOT EXISTS (SELECT 1 FROM admin_offer_reviews r
+                    WHERE r.offer_id=o.id AND r.status IN ('pending','rejected','archived'))
+                AND NOT EXISTS (SELECT 1 FROM offer_alerts a
+                    WHERE a.user_id=? AND a.offer_id=o.id)
+                ORDER BY o.publication_date DESC,o.id DESC''',(user_id,)).fetchall()
+            return notify_new_offers(conn,[dict(r) for r in rows if recent_offer(dict(r))],preferences)
+    finally:conn.close()
 
 
 def watch_status():

@@ -2319,7 +2319,9 @@ def opportunities_status():
 @login_required
 def notifications_list():
     items = [dict(item) for item in get_notifications(session["user_id"])]
-    return jsonify(items=items, unread=sum(not item["is_read"] for item in items))
+    response=jsonify(items=items, unread=sum(not item["is_read"] for item in items))
+    response.headers['Cache-Control']='private, no-store'
+    return response
 
 
 @app.route("/api/notifications/<action>", methods=["POST"])

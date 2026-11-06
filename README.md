@@ -551,3 +551,16 @@ CV Builder defaults to browser-based photo enhancement (square framing, zoom, ve
 Render Free uses private Supabase Storage with UPLOAD_STORAGE=supabase, SUPABASE_URL, SUPABASE_STORAGE_BUCKET and the server-only SUPABASE_STORAGE_KEY. Existing authenticated download routes hydrate a disposable local cache. Local file mode remains the default outside deployment. Keep the bucket private and migrate existing uploads before launch. See DEPLOYMENT.md.
 
 For free hosts that block SMTP, EMAIL_PROVIDER=brevo, BREVO_API_KEY and a verified BREVO_SENDER_EMAIL enable HTTPS transactional delivery. Existing SMTP remains available in local mode. Free hosting sleeps on idle, so background notifications are not continuously scheduled. No paid plan is enabled automatically.
+
+## Profile offer alerts
+
+New offer imports create in-app alerts for matching profiles. The notification
+request also reconciles current, visible Marrakech offers to recover missed
+imports and profile edits on Vercel, without a background thread. Each user/offer
+pair is notified once, including after clearing notifications. Manual/uploaded
+profile fields and profile corrections supply matching evidence; job titles
+recognize common French/English equivalents. Public board summaries do not
+require skills absent from their limited metadata. Unrelated, expired and
+moderation-blocked offers are excluded. Collection runs daily; the bell checks
+for saved alerts every minute while the page is visible. These are in-app alerts,
+independent of optional email delivery settings.
