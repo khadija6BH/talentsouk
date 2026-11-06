@@ -27,6 +27,10 @@ def ensure_catalog_schema(conn):
         is_active INTEGER NOT NULL DEFAULT 0,
         verified_at TEXT NOT NULL DEFAULT '', reason TEXT NOT NULL DEFAULT '')''')
 
+    conn.execute("""CREATE TABLE IF NOT EXISTS admin_offer_reviews (
+        offer_id INTEGER PRIMARY KEY REFERENCES offers(id) ON DELETE CASCADE,
+        status TEXT NOT NULL DEFAULT 'pending', note TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL)""")
+
 
 def activate_offer(conn, offer_id):
     conn.execute('''INSERT INTO offer_catalog_status(offer_id,is_active,verified_at,reason)
@@ -38,6 +42,11 @@ def expire_offers(conn):
     cutoff=(datetime.now(timezone.utc)-timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
     rows=[dict(r) for r in conn.execute('''SELECT o.*,s.verified_at FROM offers o
         JOIN offer_catalog_status s ON s.offer_id=o.id WHERE s.is_active=1''')]
-    for row in rows:
-        if not recent_offer(row) or row['verified_at'] < cutoff:
-            conn.execute("UPDATE offer_catalog_status SET is_active=0,reason='age_or_verification_window_exceeded' WHERE offer_id=?",(row['id'],))
+    expired = [row['id'] for row in rows
+               if not recent_offer(row) or row['verified_at'] < cutoff]
+    # A remote PostgreSQL round trip per archived offer can exceed a serverless
+    # request's duration. Keep parameter batches below SQLite's common limit.
+    for start in range(0, len(expired), 400):
+        batch = expired[start:start + 400]
+        conn.execute("UPDATE offer_catalog_status SET is_active=0,reason='age_or_verification_window_exceeded' WHERE offer_id IN ("
+                     + ','.join('?' for _ in batch) + ')', tuple(batch))

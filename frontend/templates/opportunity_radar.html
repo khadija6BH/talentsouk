@@ -17,7 +17,7 @@
     <div class="radar-filters">{% for key,label,options in [('source','Source',sources),('location','Location',locations),('contract','Contract',contracts)] %}<label for="radar-{{ key }}">{{ label }}<select id="radar-{{ key }}" name="{{ key }}"><option value="">All</option>{% for option in options %}<option value="{{ option }}" {{ 'selected' if filters[key]==option }}>{{ option }}</option>{% endfor %}</select></label>{% endfor %}</div>
   </form>
 
-  <div class="radar-sync-strip"><div class="radar-sync-copy"><span class="radar-sync-dot" aria-hidden="true"></span><div><strong>Automatic updates every hour</strong><p>While the local app is running. Matching new offers appear in your notifications.</p></div></div><a class="btn btn-secondary" href="{{ url_for('profile') }}">Set my target job and career field</a></div>
+  <div class="radar-sync-strip"><div class="radar-sync-copy"><span class="radar-sync-dot" aria-hidden="true"></span><div><strong>Offer updates</strong><p>Imported offers require review before publication. Use Import new offers to request a source update.</p></div></div><a class="btn btn-secondary" href="{{ url_for('profile') }}">Set my target job and career field</a></div>
   <div id="radar-new-offers" class="radar-new-offers hidden" role="status"><p>New offers are ready.</p><button class="btn btn-primary" type="button">Show latest offers</button></div>
 
   <details class="radar-import" id="radar-sources">

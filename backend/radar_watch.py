@@ -83,7 +83,7 @@ def watch_status():
     finally:conn.close()
 
 
-def run_cycle():
+def run_cycle(*, include_profile_queries=True, pages=1):
     conn=get_db_connection()
     try:
         with conn:
@@ -106,14 +106,17 @@ def run_cycle():
         city='Marrakech'
         if role and status['jooble']:extras.append(('jooble','ma',role,city))
     extras=list(dict.fromkeys(extras))
-    if extras:
+    if extras and include_profile_queries:
         import time
         start=(int(time.time()//3600)*3)%len(extras)
         queries.extend((extras+extras)[start:start+min(3,len(extras))])
     try:
         for provider,country,keyword,city in queries:
             try:
-                result=refresh_external_offers(provider,country,keyword,city)
+                if pages == 1:
+                    result=refresh_external_offers(provider,country,keyword,city)
+                else:
+                    result=refresh_external_offers(provider,country,keyword,city,pages=pages)
                 state='ok';message=str(result['created'])+' new offers; '+str(result['updated'])+' checked'
             except (JobSourceError,ValueError) as error:state='error';message=str(error)
             except Exception:state='error';message='Source temporarily unavailable. Saved offers are preserved.'

@@ -3,8 +3,12 @@
   "framework": "flask",
   "buildCommand": "python vercel_build.py",
   "regions": ["cdg1"],
+  "crons": [
+    { "path": "/api/cron/offers", "schedule": "0 6 * * *" }
+  ],
   "functions": {
     "app.py": {
+      "maxDuration": 300,
       "excludeFiles": "{backend/tests/**,backend/legacy/**,**/__pycache__/**,**/*.pyc,backups/**,deployment/**,uploads/**,data/backups/**,data/offer_cleaning/**}"
     }
   }

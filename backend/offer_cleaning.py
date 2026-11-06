@@ -26,6 +26,12 @@ def marrakech_location(value):
 
 def canonical_url(value):
     parts = urlsplit(str(value or '').strip())
+    host = (parts.hostname or '').lower()
+    # Jooble regenerates click/ranking parameters for the same announcement.
+    # Only these paths contain a complete stable job ID; generic URLs may need
+    # their query parameters to identify a job and must keep them.
+    if (host == 'jooble.org' or host.endswith('.jooble.org')) and re.fullmatch(r'/(?:desc|jdp)/-?\d+/?', parts.path):
+        return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip('/'), '', ''))
     params = [(k,v) for k,v in parse_qsl(parts.query, keep_blank_values=True)
               if not k.casefold().startswith('utm_') and k.casefold() not in {'gclid','fbclid'}]
     return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip('/'), urlencode(sorted(params)), ''))

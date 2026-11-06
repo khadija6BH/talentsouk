@@ -23,7 +23,7 @@
       button.querySelector('.radar-button-label').textContent=label;
     }
   });
-  const notes={jobicy:'Latest remote offers (up to 100). Check each offer’s location restrictions. Responses are cached for one hour.',local_csv:'The local file is read without contacting job websites.',jooble:'Search the first page of Jooble Morocco results. Your key stays on the server.',adzuna:'Import up to 50 search results. Your credentials stay on the server.',arbeitnow:'Search within the latest Germany feed (up to 100 offers). Remote offers can have location restrictions.'};
+  const notes={jobicy:'Latest remote offers (up to 100). Check each offer’s location restrictions. Responses are cached for one hour.',local_csv:'The local file is read without contacting job websites.',jooble:'Search up to five pages of Jooble Morocco results. Your key stays on the server.',adzuna:'Import up to five pages of search results. Your credentials stay on the server.',arbeitnow:'Search within the latest Germany feed (up to 100 offers). Remote offers can have location restrictions.'};
   function selectSource(){
     const supported={jooble:['ma'],adzuna:['fr','gb','de','us'],arbeitnow:['de'],jobicy:['remote']}[source.value];
     [...country.options].forEach(option=>option.disabled=Boolean(supported&&!supported.includes(option.value)));

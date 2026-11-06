@@ -104,6 +104,9 @@ app = Flask(
     template_folder=str(PROJECT_ROOT / "frontend" / "templates"),
     static_folder=str(PROJECT_ROOT / "frontend" / "static"),
 )
+from backend.radar_cron import radar_cron
+app.register_blueprint(radar_cron)
+
 # Exactly one trusted reverse proxy (Nginx, Render, Railway, or Fly) sits in
 # front of production. This makes Flask honor the original HTTPS scheme/host.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
@@ -1366,7 +1369,7 @@ def opportunity_radar_refresh():
         if provider=='local_csv':
             result = refresh_local_offers(PROJECT_ROOT / 'data' / 'all_jobs_marrakech (2).csv')
         else:
-            result = refresh_external_offers(provider, request.form.get('country','ma'), request.form.get('keyword',''),request.form.get('city',''))
+            result = refresh_external_offers(provider, request.form.get('country','ma'), request.form.get('keyword',''),request.form.get('city',''),pages=5 if provider in {'jooble','adzuna'} else 1)
         flash('Refresh complete: %s new offers, %s existing offers checked.' % (result['created'],result['updated']), 'success')
     except (ValueError, OSError) as error:
         flash(str(error) if isinstance(error, ValueError) else 'The local offers file could not be read. Try again later.', 'error')

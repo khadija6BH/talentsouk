@@ -80,12 +80,12 @@ def fetch_offers(provider, country, keyword='', location='', page=1):
     keyword=keyword.strip()[:200]; location=location.strip()[:200]
     if provider=='jooble':
         key=os.environ['JOOBLE_API_KEY'].strip()
-        result=_json('https://ma.jooble.org/api/'+key, {'keywords':keyword,'location':location,'page':str(page)})
+        result=_json('https://ma.jooble.org/api/'+key, {'keywords':keyword,'location':location,'page':str(page),'ResultOnPage':100})
         items=result.get('jobs')
     elif provider=='adzuna':
         params={'app_id':os.environ['ADZUNA_APP_ID'].strip(),'app_key':os.environ['ADZUNA_APP_KEY'].strip(),
                 'what':keyword,'where':location,'results_per_page':50,'sort_by':'date','content-type':'application/json'}
-        result=_json('https://api.adzuna.com/v1/api/jobs/'+country+'/search/1?'+urlencode(params))
+        result=_json('https://api.adzuna.com/v1/api/jobs/'+country+'/search/'+str(page)+'?'+urlencode(params))
         items=result.get('results')
     elif provider=='jobicy':
         result=_jobicy_feed()
@@ -121,3 +121,29 @@ def fetch_offers(provider, country, keyword='', location='', page=1):
     if items and skipped==len(items[:100]):
         raise JobSourceError('The source returned no usable offers. No offers were changed.')
     return offers, skipped
+
+
+def fetch_offer_pages(provider, country, keyword='', location='', *, pages=5):
+    """Collect a bounded set before any writes; deduplicate tracking URL variants."""
+    if type(pages) is not int or not 1 <= pages <= 5:
+        raise JobSourceError('Choose between 1 and 5 source pages.')
+    if pages > 1 and provider not in {'jooble', 'adzuna'}:
+        raise JobSourceError('This source does not support paginated imports.')
+    from backend.offer_cleaning import canonical_url
+    result, seen, skipped = [], set(), 0
+    for page in range(1, pages + 1):
+        rows, invalid = fetch_offers(provider, country, keyword, location, page=page)
+        skipped += invalid
+        added = 0
+        for row in rows:
+            key = canonical_url(row['url'])
+            if key in seen:
+                skipped += 1
+                continue
+            seen.add(key)
+            result.append(row)
+            added += 1
+        # Stop an exhausted feed or a provider ignoring the page parameter.
+        if not added and (rows or not invalid):
+            break
+    return result, skipped
