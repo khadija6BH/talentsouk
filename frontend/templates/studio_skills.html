@@ -6,17 +6,8 @@
   .gap-hero{background:linear-gradient(135deg,#311432,#673147);color:#fff;border-radius:1.5rem;padding:1.6rem;position:relative;overflow:hidden}
   .gap-hero:after{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;top:-110px;background:rgba(230,230,250,.12)}
   .gap-stat{background:#fff;border:1px solid #eee7ec;border-radius:1rem;padding:1rem}
-  .gap-chart{position:relative;height:300px}
   .skill-row{display:grid;grid-template-columns:minmax(130px,1fr) 2fr auto;gap:1rem;align-items:center;padding:.8rem 0;border-bottom:1px solid #f1edf0}
   .demand-track{height:.55rem;background:#eee9ee;border-radius:999px;overflow:hidden}.demand-fill{height:100%;background:linear-gradient(90deg,#A18F93,#673147);border-radius:999px}
-  .roadmap-number{width:2.1rem;height:2.1rem;display:grid;place-items:center;border-radius:.75rem;background:#D8C7D8;color:#311432;font-weight:800;flex:none}
-  .roadmap-flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;position:relative}
-  .roadmap-card{position:relative;border:1px solid #e9e1e7;border-radius:1rem;padding:1rem;background:#fff;min-height:190px;transition:.18s ease}
-  .roadmap-card:hover{transform:translateY(-3px);border-color:#A18F93;box-shadow:0 12px 28px rgba(49,20,50,.09)}
-  .roadmap-card:after{content:"→";position:absolute;right:-.78rem;top:50%;z-index:2;width:1.5rem;height:1.5rem;display:grid;place-items:center;border-radius:50%;background:#D8C7D8;color:#673147;font-weight:800}
-  .roadmap-card:nth-child(3n):after,.roadmap-card:last-child:after{display:none}
-  .roadmap-mini-step{display:flex;align-items:center;gap:.45rem;font-size:.75rem;color:#64748b}
-  .roadmap-mini-step span{width:1.35rem;height:1.35rem;display:grid;place-items:center;border-radius:50%;background:#f4eef3;color:#673147;font-weight:700;flex:none}
   .ai-pipeline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-bottom:1.25rem}
   .ai-pipeline-card{position:relative;border:1px solid #d9c7d5;background:linear-gradient(145deg,#fff,#f8f4f7);border-radius:1rem;padding:1rem}
   .ai-pipeline-card:after{content:"→";position:absolute;right:-.78rem;top:2.2rem;width:1.5rem;height:1.5rem;border-radius:50%;display:grid;place-items:center;background:#673147;color:#fff;z-index:2}
@@ -28,8 +19,20 @@
   .cv-source-choice:hover{border-color:#A18F93;transform:translateY(-1px);box-shadow:0 8px 22px rgba(49,20,50,.08)}
   .cv-source-choice.is-active{border-color:#673147;background:#f7f0f5;color:#311432;box-shadow:inset 0 0 0 1px #673147}
   .cv-source-icon{width:2.3rem;height:2.3rem;display:grid;place-items:center;border-radius:.75rem;background:#E6E6FA;color:#673147;flex:none}
-  @media(max-width:900px){.roadmap-flow,.ai-pipeline{grid-template-columns:1fr}.roadmap-card{min-height:0}.roadmap-card:after,.ai-pipeline-card:after{content:"↓";right:auto;left:50%;top:auto;bottom:-.8rem}.roadmap-card:nth-child(3n):after{display:grid}.roadmap-card:last-child:after,.ai-pipeline-card:last-child:after{display:none}}
-  @media(max-width:640px){.skill-row{grid-template-columns:1fr auto}.skill-row .demand{grid-column:1/-1}.gap-chart{height:250px}}
+  @media(max-width:900px){.ai-pipeline{grid-template-columns:1fr}.ai-pipeline-card:after{content:"↓";right:auto;left:50%;top:auto;bottom:-.8rem}.ai-pipeline-card:last-child:after{display:none}}
+  @media(max-width:640px){.skill-row{grid-template-columns:1fr auto}.skill-row .demand{grid-column:1/-1}}
+  .learning-map{max-width:44rem;margin:1rem auto 0;padding:1.25rem clamp(.5rem,3vw,2rem);border-radius:1.3rem;background:#f8f2f8;color:#311432}
+  .map-stop{position:relative;text-align:center;padding-bottom:1rem}
+  .map-stop::after{content:"";display:block;width:44%;height:2.75rem;margin:.25rem auto 0;border-bottom:3px dashed #aa819f;border-inline-end:3px dashed #aa819f;border-radius:0 0 1.5rem 0}
+  .map-stop:nth-child(even)::after{transform:scaleX(-1)}
+  .map-stop summary{cursor:pointer;list-style:none;display:grid;justify-items:center;gap:.35rem;width:max-content;max-width:66%;margin:0 auto;transform:translateX(-25%)}
+  .map-stop summary::-webkit-details-marker{display:none}
+  .map-stop:nth-child(even) summary{transform:translateX(25%)}
+  .map-node{display:grid;place-items:center;width:3.25rem;height:3.25rem;border-radius:50%;background:#673147;color:white;font-weight:800;box-shadow:0 4px #432036}
+  .map-stop[data-done="true"] .map-node{background:#27624c;box-shadow:0 4px #174233}
+  .map-actions{text-align:start;background:white;color:#311432;border:1px solid #e6d9e4;border-radius:1rem;padding:1rem;margin:1rem auto 0}
+  .map-reward{text-align:center;padding:1rem;background:#fff5d7;color:#47331d;border:1px solid #e8cf8c;border-radius:1rem}
+  .map-reward svg{width:3rem;height:3rem;display:block;margin:0 auto .4rem}
 </style>
 {% endblock %}
 
@@ -43,7 +46,7 @@
   </div>
 </section>
 
-<nav class="flex flex-wrap gap-3 mb-6" aria-label="Skill analysis sections">{% if analysis.has_cv_evidence %}<a class="btn btn-secondary" href="#technical-skills">Technical skills</a><a class="btn btn-secondary" href="#soft-skills">Soft skills</a><a class="btn btn-secondary" href="#technical-roadmap">Technical roadmap</a><a class="btn btn-secondary" href="#soft-roadmap">Soft-skills roadmap</a>{% endif %}<a class="btn btn-primary" href="{{ url_for('interview_helper',offer_id=selected_offer.id if selected_offer else None) }}">Practice with AI Simulator</a></nav>
+<nav class="flex flex-wrap gap-3 mb-6" aria-label="Skill analysis sections">{% if analysis.has_cv_evidence %}<a class="btn btn-secondary" href="#technical-skills">Technical skills</a><a class="btn btn-secondary" href="#soft-skills">Soft skills</a><a class="btn btn-secondary" href="#learning-roadmap">Learning map</a>{% endif %}<a class="btn btn-primary" href="{{ url_for('interview_helper',offer_id=selected_offer.id if selected_offer else None) }}">Practice with AI Simulator</a></nav>
 <form method="get" action="{{ url_for('ai_studio') }}" class="card p-4 mb-6"><input type="hidden" name="tab" value="skills">
   <div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><h3 class="font-semibold text-slate-800">Choose your profile</h3><p class="text-xs text-slate-500 mt-1">One click loads the existing version directly from your account. No re-upload is required.</p></div><span class="text-xs rounded-full bg-purple-50 text-purple-700 px-3 py-1">Current: {{ 'Candidate profile' if cv_source == 'dna' else 'Uploaded CV' if cv_source == 'uploaded' else 'Created CV' }}</span></div>
   <a href="{{ url_for('profile') }}" class="btn btn-ghost mb-3">Review my profile</a>
@@ -97,19 +100,6 @@
   <div class="gap-stat"><p class="text-xs text-slate-500">Real offers analyzed</p><strong class="font-display text-2xl text-slate-800">{{ analysis.offers_analyzed }}</strong></div>
 </section>
 
-<section class="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-6">
-  <article class="card p-5 xl:col-span-2">
-    <h3 class="font-display font-semibold text-slate-800">CV coverage</h3>
-    <p class="text-xs text-slate-500 mt-1">Documented vs missing skills among detected market requirements.</p>
-    <div class="gap-chart mt-3"><canvas id="coverage-chart"></canvas><p class="chart-fallback hidden text-sm text-slate-500 text-center pt-20">Chart unavailable. The exact results remain listed below.</p></div>
-  </article>
-  <article class="card p-5 xl:col-span-3">
-    <h3 class="font-display font-semibold text-slate-800">Most requested skills</h3>
-    <p class="text-xs text-slate-500 mt-1">Frequency found in the selected real offers and companies.</p>
-    <div class="gap-chart mt-3"><canvas id="demand-chart"></canvas><p class="chart-fallback hidden text-sm text-slate-500 text-center pt-20">Chart unavailable. The exact results remain listed below.</p></div>
-  </article>
-</section>
-
 <section class="card p-5 mb-6">
   <div class="flex flex-wrap items-end justify-between gap-2 mb-3"><div><h3 class="font-display font-semibold text-slate-800">Evidence-based skill comparison</h3><p class="text-xs text-slate-500 mt-1">A skill counts as present only when it is documented in the selected CV.</p></div><span class="text-xs text-slate-400">{{ analysis.companies_analyzed }} companies scanned</span></div>
   {% for skill in analysis.skills %}
@@ -132,7 +122,7 @@
   </article>
 </section>
 
-<section class="card p-5">
+<section id="learning-roadmap" class="card p-5" style="scroll-margin-top:90px">
   <h3 class="font-display font-semibold text-slate-800">Your personalized roadmap</h3>
   <p class="text-sm text-slate-500 mt-1 mb-5">Learn → Practice → Validate → Add to CV.</p>
   <div>
@@ -150,43 +140,29 @@
     {% elif not ai_enabled %}
     <div class="text-xs text-slate-500 rounded-xl bg-slate-50 p-3 mb-4">Roadmap based on verified market evidence · AI coaching available from Settings.</div>
     {% endif %}
-    <div class="roadmap-flow">
-    {% for step in analysis.roadmap %}
-    <article class="roadmap-card">
-      <div class="flex items-start justify-between gap-2"><span class="roadmap-number">{{ loop.index }}</span><span class="text-[10px] px-2 py-1 rounded-full bg-[#E6E6FA] text-[#673147] uppercase tracking-wide">{{ step.priority }}</span></div>
-      <h4 class="font-display font-semibold text-slate-800 mt-3">{{ step.skill }}</h4>
-      <span class="text-xs text-slate-400">{{ step.category }}</span>
-      <div class="demand-track mt-3"><div class="demand-fill" style="width:{{ analysis.missing[loop.index0].demand_percent if loop.index0 < analysis.missing|length else 50 }}%"></div></div>
-      <div class="mt-4 space-y-2"><div class="roadmap-mini-step"><span>1</span>Learn fundamentals</div><div class="roadmap-mini-step"><span>2</span>Build a small project</div><div class="roadmap-mini-step"><span>3</span>Validate and add to CV</div></div>
-    </article>
-    {% else %}<div class="text-sm text-purple-700 bg-purple-50 rounded-xl p-4">✓ No priority gap detected in this market sample.</div>{% endfor %}
+  </div>
+  <p id="learning-total" class="text-sm text-slate-600" aria-live="polite">{{ analysis.learning_progress.completed }} / {{ analysis.learning_progress.total }} steps you marked complete.</p>
+  <p class="text-sm text-slate-500 mt-1">Open a skill on the map, try an activity and save its status.</p>
+  <div class="learning-map">
+    {% for step in analysis.technical_roadmap + analysis.soft_roadmap %}
+{% set completed = step.tasks|selectattr('status','equalto','completed')|list|length %}
+<details class="map-stop" data-done="{{ 'true' if step.tasks and completed == step.tasks|length else 'false' }}">
+  <summary><span class="map-node" aria-hidden="true">{{ loop.index }}</span><strong>{{ step.skill }}</strong><span class="text-xs">{{ step.category }} · <span class="map-count">{{ completed }}/{{ step.tasks|length }} done</span></span></summary>
+  <div class="map-actions">{% if step.skill in ['SQL','Python','Git','Communication'] %}<a class="btn btn-secondary text-xs mt-3" href="{{ url_for('skill_practice',skill=step.skill) }}">Practice {{ step.skill }}</a>{% endif %}<a class="btn btn-secondary text-xs mt-3" href="{{ url_for('portfolio',skill=step.skill,offer_id=analysis.target_offer.id if analysis.target_offer else 0) }}">Build a proof project ↗</a><p class="text-xs text-slate-500 mt-2">{{ step.reason }}</p><div class="flex flex-wrap gap-2 mt-3">{% for resource in step.resources %}<a class="btn btn-secondary text-xs" href="{{ resource.url }}"{% if resource.url.startswith('https://') %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ resource.title }} ↗</a>{% endfor %}</div>{% for task in step.tasks %}<form class="learning-task mt-4 border-t border-slate-100 pt-3" data-skill="{{ step.skill }}" data-index="{{ task.index }}" data-saved-status="{{ task.status }}"><p class="text-sm">{{ loop.index }}. {{ task.text }}</p><label class="block text-xs mt-3">Task status<select name="status" class="w-full border border-slate-200 rounded-lg p-2 mt-1">{% for value,label in [('planned','Planned'),('in_progress','In progress'),('completed','Completed by me')] %}<option value="{{ value }}"{% if value == task.status %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label class="block text-xs mt-3">What did you practice? (optional)<textarea name="notes" rows="2" maxlength="1000" class="w-full border border-slate-200 rounded-lg p-2 mt-1">{{ task.notes }}</textarea></label><button type="submit" class="btn btn-primary text-xs mt-2">Save this step</button><p class="learning-status text-xs mt-2" role="status" aria-live="polite"></p></form>{% endfor %}</div></details>
+    {% else %}<p class="text-sm mb-4">No priority skills to practice in this market sample.</p>{% endfor %}
+    <div class="map-reward">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 21v18h36V21" fill="#a35c2d" stroke="#68401d" stroke-width="2"/><path d="M6 21a11 11 0 0 1 11-11h14a11 11 0 0 1 11 11z" fill="#dc9a38" stroke="#68401d" stroke-width="2"/><path d="M6 23h36v5H6z" fill="#efbb50"/><rect x="20" y="20" width="8" height="11" rx="2" fill="#ffe18a" stroke="#68401d" stroke-width="2"/></svg>
+      <strong>Completed CV</strong>
+      <p class="text-sm mt-1">Your goal: add the skills and projects you can demonstrate.</p>
+      <a class="btn btn-secondary mt-3" href="{{ url_for('cv_builder') }}">Review my CV</a>
     </div>
   </div>
 </section>
-
-<section class="card p-5 mt-6"><h3 class="font-semibold">My learning progress</h3><p id="learning-total" class="text-sm text-slate-500 mt-2">{{ analysis.learning_progress.completed }} / {{ analysis.learning_progress.total }} current roadmap actions completed (self-reported).</p></section>
-<section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-6">
-{% for kind,title,steps in [('technical','Technical roadmap',analysis.technical_roadmap),('soft','Soft-skills roadmap',analysis.soft_roadmap)] %}
-<article id="{{ kind }}-roadmap" class="card p-5" style="scroll-margin-top:90px"><h3 class="font-display font-semibold text-slate-800">{{ title }}</h3><p class="text-xs text-slate-500 mt-2">Learn, practice, validate and record your own evidence.</p><div class="space-y-5 mt-4">{% for step in steps %}<section class="border border-slate-200 rounded-xl p-4"><h4 class="font-semibold">{{ step.skill }}</h4>{% if step.skill in ['SQL','Python','Git','Communication'] %}<a class="btn btn-secondary text-xs mt-3" href="{{ url_for('skill_practice',skill=step.skill) }}">Practice {{ step.skill }}</a>{% endif %}<a class="btn btn-secondary text-xs mt-3" href="{{ url_for('portfolio',skill=step.skill,offer_id=analysis.target_offer.id if analysis.target_offer else 0) }}">Build a proof project ↗</a><p class="text-xs text-slate-500 mt-2">{{ step.reason }}</p><div class="flex flex-wrap gap-2 mt-3">{% for resource in step.resources %}<a class="btn btn-secondary text-xs" href="{{ resource.url }}"{% if resource.url.startswith('https://') %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ resource.title }} ↗</a>{% endfor %}</div>{% for task in step.tasks %}<form class="learning-task mt-4 border-t border-slate-100 pt-3" data-skill="{{ step.skill }}" data-index="{{ task.index }}" data-saved-status="{{ task.status }}"><p class="text-sm">{{ loop.index }}. {{ task.text }}</p><label class="block text-xs mt-3">Progress<select name="status" class="w-full border border-slate-200 rounded-lg p-2 mt-1">{% for value,label in [('planned','Planned'),('in_progress','In progress'),('completed','Completed by me')] %}<option value="{{ value }}"{% if value == task.status %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><label class="block text-xs mt-3">Evidence or practice notes<textarea name="notes" rows="2" maxlength="1000" class="w-full border border-slate-200 rounded-lg p-2 mt-1">{{ task.notes }}</textarea></label><button type="submit" class="btn btn-primary text-xs mt-2">Save learning progress</button><p class="learning-status text-xs mt-2" role="status" aria-live="polite"></p></form>{% endfor %}</section>{% else %}<p class="text-sm text-slate-500">No priority {{ kind }} gap detected in the selected evidence.</p>{% endfor %}</div></article>
-{% endfor %}</section>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.querySelectorAll('.learning-task').forEach(form=>form.addEventListener('submit',async event=>{event.preventDefault();const button=form.querySelector('button');const status=form.querySelector('.learning-status');button.disabled=true;status.textContent='Saving…';try{const response=await fetch('/api/skill-gap/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skill:form.dataset.skill,action_index:Number(form.dataset.index),status:form.elements.status.value,notes:form.elements.notes.value})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Unable to save progress.');status.textContent=data.message;form.dataset.savedStatus=form.elements.status.value;const forms=[...document.querySelectorAll('.learning-task')];document.getElementById('learning-total').textContent=`${forms.filter(item=>item.dataset.savedStatus==='completed').length} / ${forms.length} current roadmap actions completed (self-reported).`}catch(error){status.textContent=error.message}finally{button.disabled=false}}));
+document.querySelectorAll('.learning-task').forEach(form=>form.addEventListener('submit',async event=>{event.preventDefault();const button=form.querySelector('button');const status=form.querySelector('.learning-status');button.disabled=true;status.textContent='Saving…';try{const response=await fetch('/api/skill-gap/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skill:form.dataset.skill,action_index:Number(form.dataset.index),status:form.elements.status.value,notes:form.elements.notes.value})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Unable to save progress.');status.textContent=data.message;form.dataset.savedStatus=form.elements.status.value;const stop=form.closest('.map-stop');const tasks=[...stop.querySelectorAll('.learning-task')];const done=tasks.filter(item=>item.dataset.savedStatus==='completed').length;stop.dataset.done=String(done===tasks.length);stop.querySelector('.map-count').textContent=done+'/'+tasks.length+' done';const forms=[...document.querySelectorAll('.learning-task')];document.getElementById('learning-total').textContent=`${forms.filter(item=>item.dataset.savedStatus==='completed').length} / ${forms.length} steps you marked complete.`}catch(error){status.textContent=error.message}finally{button.disabled=false}}));
 </script>
-{% if analysis.has_cv_evidence %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
-<script>
-(() => {
-  if (typeof Chart === "undefined") { document.querySelectorAll(".chart-fallback").forEach(el => el.classList.remove("hidden")); document.querySelectorAll("canvas").forEach(el => el.classList.add("hidden")); return; }
-  const skills = {{ analysis.skills|tojson }};
-  const shared = {responsive:true,maintainAspectRatio:false,animation:{duration:800,easing:"easeOutQuart"},plugins:{legend:{labels:{usePointStyle:true}},tooltip:{backgroundColor:"#311432",padding:12}}};
-  new Chart(document.getElementById("coverage-chart"), {type:"doughnut",data:{labels:["Documented","Missing"],datasets:[{data:[{{ analysis.documented_count }},{{ analysis.missing_count }}],backgroundColor:["#673147","#D8C7D8"],borderWidth:0,hoverOffset:8}]},options:{...shared,cutout:"68%"}});
-  const demanded = skills.filter(item => item.demand_count > 0).slice(0,10);
-  new Chart(document.getElementById("demand-chart"), {type:"bar",data:{labels:demanded.map(item=>item.name),datasets:[{label:"Market records",data:demanded.map(item=>item.demand_count),backgroundColor:demanded.map(item=>item.documented?"#673147":"#A18F93"),borderRadius:7,borderSkipped:false}]},options:{...shared,indexAxis:"y",scales:{x:{beginAtZero:true,ticks:{precision:0},grid:{color:"#F1EDF0"}},y:{grid:{display:false}}}}});
-})();
-</script>
-{% endif %}
 {% endblock %}
