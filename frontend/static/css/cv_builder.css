@@ -273,20 +273,7 @@
   padding-left: 1rem;
 }
 
-.cv-document-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  padding: 0;
-  list-style: none;
-}
 
-.cv-document-skills li {
-  padding: 0.2rem 0.45rem;
-  border-radius: 0.3rem;
-  background: #E6E6FA;
-  color: var(--cv-accent);
-}
 
 .cv-document-empty {
   display: grid;
@@ -330,10 +317,6 @@
   color: var(--cv-accent);
 }
 
-.cv-document[data-template="Tech / AI"] .cv-document-skills li {
-  background: #E6E6FA;
-  color: var(--cv-accent);
-}
 
 .cv-optimizer {
   gap: 1rem;

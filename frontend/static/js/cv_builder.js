@@ -116,16 +116,15 @@
       heading.textContent = title;
       section.append(heading);
 
-      if (type === "paragraph") {
+      if (type === "paragraph" || type === "skills") {
         const paragraph = document.createElement("p");
-        paragraph.textContent = value;
+        paragraph.textContent = type === "skills"
+          ? value.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean).join(", ")
+          : value;
         section.append(paragraph);
       } else {
-        const items = type === "skills"
-          ? value.split(/[\n,;]+/).map((item) => item.trim()).filter(Boolean)
-          : value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
+        const items = value.split(/\n+/).map((item) => item.trim()).filter(Boolean);
         const list = document.createElement("ul");
-        if (type === "skills") list.className = "cv-document-skills";
         items.forEach((item) => {
           const listItem = document.createElement("li");
           listItem.textContent = item;
