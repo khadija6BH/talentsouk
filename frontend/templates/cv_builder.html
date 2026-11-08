@@ -197,9 +197,9 @@
         </label>
         <div class="cv-field cv-experience-editor">
           <label for="cv-experience">Experience</label>
-          <p class="cv-experience-help" id="experience-help">Write your notes. AI will format them professionally.</p>
-          <textarea id="cv-experience" rows="6" maxlength="12000" aria-describedby="experience-help" placeholder="For example: I worked as an intern at Atlas Studio from March to June 2025. I cleaned Excel files, built SQL reports and helped the team prepare weekly dashboards."></textarea>
-          <div class="cv-experience-ai-toolbar"><span></span><div><label class="sr-only" for="experience-ai-language">Experience language</label><select id="experience-ai-language" aria-label="Experience language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select><button id="experience-generate-ai" type="button" class="cv-ai-write-button">✧ Generate with AI</button></div></div>
+          <p class="cv-experience-help" id="experience-help">Write a few notes in any language, including Darija (Arabic or Latin script). AI will turn them into a professional CV entry in the output language you choose.</p>
+          <textarea id="cv-experience" dir="auto" rows="6" maxlength="12000" aria-describedby="experience-help" placeholder="Example: Dert stage f Atlas Studio mn mars l juin 2025. N9it fichiers Excel w 9adit rapports b SQL."></textarea>
+          <div class="cv-experience-ai-toolbar"><span></span><div><label for="experience-ai-language">CV output language</label><select id="experience-ai-language"><option value="en">English</option><option value="fr">Français</option><option value="ar">العربية</option></select><button id="experience-generate-ai" type="button" class="cv-ai-write-button">✧ Generate with AI</button></div></div>
           <p id="experience-ai-status" class="cv-experience-help" role="status" aria-live="polite"></p>
           <div id="experience-ai-review" class="cv-experience-review" hidden><strong>A professional version of your experience</strong><p>Review before applying.</p><pre id="experience-ai-result" dir="auto"></pre><div><button id="experience-ai-apply" type="button" class="btn btn-primary">Use this version</button><button id="experience-ai-cancel" type="button" class="btn btn-secondary">Keep my text</button></div></div>
         </div>

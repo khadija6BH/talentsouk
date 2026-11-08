@@ -397,7 +397,7 @@
   document.getElementById('experience-generate-ai').addEventListener('click', async event => {
     const button = event.currentTarget;
     if (!experienceField.value.trim()) {
-      experienceStatus.textContent = 'Describe your experience first. A few notes are enough to start.';
+      experienceStatus.textContent = 'Add a few notes about your experience in any language, including Darija.';
       experienceField.focus(); return;
     }
     experienceOriginal = experienceField.value; experienceSource = activeSource;
