@@ -1150,6 +1150,9 @@ def performance_lab():
     return render_template('performance_lab.html',active_page='crm',crm_view='performance',page_title='CRM',report=report,activity_calendar=activity_calendar(session['user_id']))
 
 
+from backend.github_portfolio import register as register_github_portfolio, connection as github_connection
+register_github_portfolio(app, login_required)
+
 @app.route('/portfolio')
 @login_required
 def portfolio():
@@ -1169,7 +1172,7 @@ def portfolio():
         projects=projects,catalog=CATALOG,selected_skill=skill,
         suggestion=project_template(skill) if skill else None,offer=offer,offer_id=offer_id,
         recommendations=suggested_projects(profile,builder.get('target_position','')),
-        studio=studio_settings(uid),themes=THEMES,profile=profile,
+        studio=studio_settings(uid),themes=THEMES,profile=profile,github=github_connection(uid),
         ready_projects=[p for p in projects if p['completed']])
 
 
@@ -2595,6 +2598,7 @@ def _interview_application_context(application_id):
 @app.route("/interview-helper")
 @login_required
 def interview_helper():
+    from backend.portfolio_service import gap_projects
     all_companies = get_all_companies()
     companies = {item["id"]: item for item in all_companies}
     offers = get_offers(all_companies)
@@ -2609,7 +2613,7 @@ def interview_helper():
         item["company"] = (item.get("practice_context") or {}).get("custom_company") or companies.get(item["company_id"], {})
     today = date.today()
     return render_template("interview_helper.html", page_title="AI Interview Simulator", active_page="interview_helper", interviews=interviews, history=history,
-                           companies=all_companies, offers=offers, progress=interview_progress(history), today=today.isoformat(), max_date=(today + timedelta(days=365)).isoformat())
+                           project_ideas=gap_projects(get_candidate_match_profile(session['user_id']),offers,all_companies,get_interview_weak_skills(session['user_id'])), companies=all_companies, offers=offers, progress=interview_progress(history), today=today.isoformat(), max_date=(today + timedelta(days=365)).isoformat())
 
 
 @app.route("/api/interview-helper/schedule", methods=["POST"])

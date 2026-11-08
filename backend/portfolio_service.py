@@ -194,3 +194,9 @@ def add_to_cv(user_id,project_id):
             conn.execute('UPDATE proof_projects SET cv_added=1 WHERE id=? AND user_id=?',(project_id,user_id))
     finally:conn.close()
     return True
+
+
+def gap_projects(profile, offers, companies, interview_gaps=None):
+    from backend.skill_gap_service import analyze_market_skill_gap
+    analysis=analyze_market_skill_gap(profile,offers,companies,interview_gaps=interview_gaps)
+    return [{**project_template(row['name']), 'reason':'Practice a missing skill identified in your Skill Gap analysis'} for row in analysis['missing'][:3] if canonical_skill(row['name'])]
