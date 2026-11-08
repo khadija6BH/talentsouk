@@ -3140,6 +3140,33 @@ def cv_portrait_use(portrait_id):
     return jsonify(target=target,portrait_id=portrait_id,cv_photo_url=url_for('cv_portrait_image',portrait_id=cv_id) if cv_id else url_for('profile_photo'),profile_photo_url=url_for('profile_photo')+'?v='+uuid.uuid4().hex)
 
 
+@app.post("/cv-builder/overleaf")
+@login_required
+def cv_builder_overleaf():
+    from flask import send_file
+    from backend.overleaf_cv import fill_template
+
+    source = request.form.get("source", "manual")
+    upload = request.files.get("template")
+    if source not in {"manual", "uploaded"} or not upload:
+        flash("Choose a saved CV and upload an Overleaf ZIP.", "error")
+    else:
+        profile = get_cv_builder_data(session["user_id"])["profiles"].get(source)
+        if not profile:
+            flash("Save your CV before filling an Overleaf template.", "error")
+        else:
+            try:
+                archive = fill_template(upload.stream, profile)
+            except ValueError as error:
+                flash(str(error), "error")
+            else:
+                response = send_file(archive, mimetype="application/zip",
+                                     as_attachment=True, download_name="talentsouk-overleaf.zip")
+                response.headers["Cache-Control"] = "private, no-store"
+                return response
+    return redirect(url_for("cv_builder", overleaf=1, _anchor="overleaf-template"))
+
+
 @app.route("/api/cv-builder/profile", methods=["POST"])
 @login_required
 def cv_builder_profile_save():

@@ -44,6 +44,18 @@
  <div id="ai-cv-review" hidden><strong>Your draft is ready to review</strong><p>Review, apply, then save.</p><pre id="ai-cv-draft-text" dir="auto"></pre><div class="cv-ai-review-actions"><button id="ai-use-draft" type="button" class="btn btn-primary">Use draft in editor →</button><button id="ai-discard-draft" type="button" class="btn btn-secondary">Discard draft</button></div></div>
  </div>
 </section>
+<details id="overleaf-template" class="card p-5 mt-4" {{ 'open' if request.args.get('overleaf') }}>
+  <summary class="cursor-pointer font-semibold">Use an Overleaf template</summary>
+  <p class="mt-3">Choose a LaTeX CV template, add TalentSouk placeholders where your details belong, then download its source ZIP. Save your CV here before importing the template.</p>
+  <p class="mt-2">For example, replace the sample name with <code>[[CV:FULL_NAME]]</code>. Other fields include <code>[[CV:JOB_TITLE]]</code>, <code>[[CV:EMAIL]]</code>, <code>[[CV:SUMMARY]]</code>, <code>[[CV:EXPERIENCE]]</code>, <code>[[CV:EDUCATION]]</code>, <code>[[CV:SKILLS]]</code>, <code>[[CV:PROJECTS]]</code> and <code>[[CV:LANGUAGES]]</code>.</p>
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('cv_builder_overleaf') }}" class="flex flex-wrap items-end gap-3 mt-4">
+    <label>Saved CV <select class="filter-select" name="source"><option value="manual">Manual CV</option><option value="uploaded">CV from upload</option></select></label>
+    <label>Template ZIP <input type="file" name="template" accept=".zip,application/zip" required></label>
+    <button type="submit" class="btn btn-secondary">Download filled LaTeX project</button>
+  </form>
+  <p class="mt-3 text-sm">Upload the filled ZIP as a new Overleaf project to preview and download your PDF.</p>
+</details>
+
 <div class="cv-workflow-shortcuts"><button id="choose-manual-workflow" type="button">Start from my details ↗</button><button id="choose-uploaded-workflow" type="button" {{ 'disabled' if not cv }}>Use my uploaded CV ↗</button><a href="{{ url_for('portfolio') }}">Add a proof project ↗</a></div>
 
 <!-- Tabs -->
