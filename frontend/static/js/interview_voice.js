@@ -33,12 +33,14 @@
     const actions = document.createElement('div');
     actions.className = 'flex flex-wrap gap-2 mt-3';
     const start = document.createElement('button');
-    start.type = 'button'; start.className = 'btn btn-secondary'; start.textContent = 'Dicter ma réponse';
+    start.type = 'button';
+    start.className = 'btn btn-secondary inline-flex items-center gap-2 voice-dictate';
+    start.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3m-3 0h6"/></svg><span>Dictate my answer</span>';
     const stop = document.createElement('button');
     stop.type = 'button'; stop.className = 'btn btn-secondary'; stop.textContent = 'Stop'; stop.disabled = true;
     const notice = document.createElement('p');
     notice.className = 'text-xs text-slate-500 mt-3';
-    notice.textContent = 'Your browser may send audio to its speech service. TalentSouk saves no audio. Only your reviewed text is submitted for feedback. Arabic and Darija accuracy depends on your browser.';
+    notice.textContent = 'Your browser may send audio to its speech service. TalentSouk saves no audio. Review your transcript before submitting.';
     const message = document.createElement('p');
     message.className = 'text-sm mt-2'; message.setAttribute('role', 'status'); message.setAttribute('aria-live', 'polite');
     if (!Speech) {
