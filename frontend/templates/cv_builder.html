@@ -35,7 +35,14 @@
  <a href="#cv-upload-area"><span>03</span> Import a CV ↗</a>
 </nav>
 <details id="overleaf-template" class="card p-5 mt-4" {{ 'open' if request.args.get('overleaf') }}>
-  <summary class="btn btn-secondary cursor-pointer">Use an Overleaf template</summary>
+  <summary class="btn btn-secondary cursor-pointer" style="display:inline-flex;align-items:center;gap:.55rem">
+    <img src="https://www.overleaf.com/favicon.ico" width="20" height="20" alt="" referrerpolicy="no-referrer">
+    Use an Overleaf template
+  </summary>
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <span>No template ZIP yet?</span>
+    <a class="btn btn-secondary" href="https://www.overleaf.com/gallery/tagged/cv" target="_blank" rel="noopener noreferrer">Browse official Overleaf CV templates</a>
+  </div>
   <p class="mt-3">Choose a LaTeX CV template, add TalentSouk placeholders where your details belong, then download its source ZIP. Save your CV here before importing the template.</p>
   <p class="mt-2">For example, replace the sample name with <code>[[CV:FULL_NAME]]</code>. Other fields include <code>[[CV:JOB_TITLE]]</code>, <code>[[CV:EMAIL]]</code>, <code>[[CV:SUMMARY]]</code>, <code>[[CV:EXPERIENCE]]</code>, <code>[[CV:EDUCATION]]</code>, <code>[[CV:SKILLS]]</code>, <code>[[CV:PROJECTS]]</code> and <code>[[CV:LANGUAGES]]</code>.</p>
   <form method="post" enctype="multipart/form-data" action="{{ url_for('cv_builder_overleaf') }}" class="flex flex-wrap items-end gap-3 mt-4">
