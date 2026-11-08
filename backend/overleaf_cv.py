@@ -26,7 +26,7 @@ def fill_template(stream, profile):
         return " ".join(profile.get(field, "").split()).translate(LATEX_ESCAPE)
 
     try:
-        with ZipFile(stream) as source, ZipFile(result, "w", ZIP_DEFLATED) as output:
+        with ZipFile(BytesIO(stream.read())) as source, ZipFile(result, "w", ZIP_DEFLATED) as output:
             entries = source.infolist()
             if len(entries) > 200 or sum(entry.file_size for entry in entries) > 20 * 1024 * 1024:
                 raise ValueError("Use a ZIP with at most 200 files and 20 MB uncompressed.")
